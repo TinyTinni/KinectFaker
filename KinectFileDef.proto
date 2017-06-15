@@ -1,0 +1,20 @@
+syntax = "proto2";
+
+package ksk;
+
+message SkeletonData {
+    message Vector3 {
+        required  int32 x = 1;
+        required  int32 y = 2;
+        required  int32 z = 3;
+    }
+    repeated Vector3 joints = 1;
+}
+
+message Frame{
+    repeated SkeletonData skeleton_data = 1;
+}
+
+message Scene{
+    repeated Frame frames = 1;
+}
