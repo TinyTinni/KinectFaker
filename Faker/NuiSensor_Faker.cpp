@@ -217,6 +217,8 @@ HRESULT INuiSensor_Faker::NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NU
     NUI_SKELETON_DATA SkeletonData[NUI_SKELETON_COUNT];
         */
 
+    const int countFrames = m_scene.frames_size();
+
     if (++m_currentFrameIdx == m_scene.frames_size())
         m_currentFrameIdx = 0;
     

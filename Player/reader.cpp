@@ -93,11 +93,11 @@ void Kinect::transformPoint(gsl::span<float, 3>& out, const Vector4& skd)
 
     // Calculate the skeleton's position on the screen
     // NuiTransformSkeletonToDepthImage returns coordinates in NUI_IMAGE_RESOLUTION_320x240 space
-    my_NuiTransformSkeletonToDepthImage(skd, &x, &y, &depth);
+    NuiTransformSkeletonToDepthImage(skd, &x, &y, &depth);
 
-    out[0] = 0.5f*(-1.f + 2.f*static_cast<float>(x)*1.f / cScreenWidth);
-    out[1] = 0.5f*(1.f - 2.f*static_cast<float>(y)*1.f / cScreenHeight);
-    out[2] = 0.f;
+    float a  =out[0] = 0.5f*(-1.f + 2.f*static_cast<float>(x)*1.f / cScreenWidth);
+    float b =out[1] = 0.5f*(1.f - 2.f*static_cast<float>(y)*1.f / cScreenHeight);
+    float c=out[2] = 0.f;
 
 }
 

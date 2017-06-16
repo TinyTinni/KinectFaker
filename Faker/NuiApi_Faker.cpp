@@ -44,14 +44,17 @@ HRESULT my_NuiCreateSensorByIndex(_In_ int index, _Out_ INuiSensor ** ppNuiSenso
         return ((f)subhook_get_trampoline(hook_NuiCreateSensorByIndex))(index, ppNuiSensor);
 
 
-    std::ifstream scene_file(fname);
+    std::ifstream scene_file(fname, std::ios::binary);
     if (!scene_file.is_open())
         return E_OUTOFMEMORY;
 
     kif::Scene scene;
-    scene.ParseFromIstream(&scene_file);
-    //if (!scene.ParseFromIstream(&scene_file))
-    //    return E_OUTOFMEMORY;
+    //scene.ParseFromIstream(&scene_file);
+    if (!scene.ParseFromIstream(&scene_file))
+    {
+        OutputDebugStringA(scene.DebugString().c_str());
+        return E_OUTOFMEMORY;
+    }
     auto frames = scene.frames_size();
     *ppNuiSensor = new INuiSensor_Faker(std::move(scene));
     return S_OK;
@@ -69,12 +72,6 @@ HRESULT my_NuiGetSensorCount(_In_ int * pCount)
     return S_OK;
 }
 
-void my_NuiTransformSkeletonToDepthImage(const Vector4& pos, LONG* x, LONG* y, USHORT* d)
-{
-    *x = pos.x;
-    *y = pos.y;
-    *d = pos.z;
-}
 
 //------------------------ Lib Functions ------------------- //
 
@@ -86,15 +83,16 @@ HRESULT kinect_faker_init(const char* strFile)
         return STG_E_FILENOTFOUND;
     fname = strFile;
 
-    //hook_NuiGetSensorCount = subhook_new((void*) NuiGetSensorCount, (void*)my_NuiGetSensorCount, SUBHOOK_OPTION_64BIT_OFFSET);
-    //hook_NuiGetSensorCount = subhook_new((void*)NuiCreateSensorByIndex, (void*)my_NuiCreateSensorByIndex, SUBHOOK_OPTION_64BIT_OFFSET);
-
+    hook_NuiGetSensorCount = subhook_new((void*) NuiGetSensorCount, (void*)my_NuiGetSensorCount, SUBHOOK_OPTION_64BIT_OFFSET);
+    hook_NuiGetSensorCount = subhook_new((void*)NuiCreateSensorByIndex, (void*)my_NuiCreateSensorByIndex, SUBHOOK_OPTION_64BIT_OFFSET);
     // install hooks
+
+    //subhook_new((void*)elem, (void*)BOOST_PP_CAT(data, elem), SUBHOOK_OPTION_64BIT_OFFSET); /*todo: only for 64-bit*/\
     //call subhook_new with hooking function my_<functionName> for each function in HOOKS
 #define HOOKS_INSTALL_MACRO(r, data, elem) BOOST_PP_CAT(hook_,elem) = \
-        subhook_new((void*) elem , (void*) BOOST_PP_CAT(data,elem) , SUBHOOK_OPTION_64BIT_OFFSET); /*todo: only for 64-bit*/\
+        subhook_new((void*)elem,(void*)BOOST_PP_CAT(my_,elem),SUBHOOK_OPTION_64BIT_OFFSET);\
         subhook_install(BOOST_PP_CAT(hook_,elem));
-    BOOST_PP_SEQ_FOR_EACH(HOOKS_INSTALL_MACRO, my_, HOOKS);
+    BOOST_PP_SEQ_FOR_EACH(HOOKS_INSTALL_MACRO, _, HOOKS);
 
     return S_OK;
 }

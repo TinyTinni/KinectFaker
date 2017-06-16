@@ -30,6 +30,7 @@ int main()
                 vec->set_y(skd.SkeletonPositions[i].y);
                 vec->set_z(skd.SkeletonPositions[i].z);
                 vec->set_w(skd.SkeletonPositions[i].w);
+                //std::cout << vec->x() << "\t" << vec->y() << "\t" << vec->z() << std::endl;
                 data->add_eskeletonpositiontrackingstate(skd.eSkeletonPositionTrackingState[i]);
             }
         };
@@ -43,14 +44,12 @@ int main()
 
         kinect.start_record();
 
-        int captureFrames = 150;
-
-        for (; captureFrames; --captureFrames)
+        while ( scene.frames_size() != 150)
             while (!kinect.get_skeleton_position());
 
         kinect.stop_record();
 
-        std::ofstream file("test_file.kif");
+        std::ofstream file("test_file.kif", std::ios::binary);
         scene.SerializePartialToOstream(&file);
 
         std::cout << "cauptured frames: " << scene.frames_size() << std::endl;

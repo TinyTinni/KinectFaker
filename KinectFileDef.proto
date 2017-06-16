@@ -4,10 +4,10 @@ package kif;
 
 message SkeletonData {
     message Vector {
-        optional  int32 x = 1;
-        optional  int32 y = 2;
-        optional  int32 z = 3;
-        optional  int32 w = 4;
+        optional  double x = 1;
+        optional  double y = 2;
+        optional  double z = 3;
+        optional  double w = 4;
     }
     required int32 eTrackingState = 1; //if skeleton is not tracked, no field can be set
     optional int32 dwTrackingID = 2;

@@ -21,4 +21,3 @@ HRESULT kinect_faker_init(const char* strFile);
 */
 void kinect_faker_release();
 
-void my_NuiTransformSkeletonToDepthImage(const Vector4& pos, LONG* x, LONG* y, USHORT* d);

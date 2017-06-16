@@ -13,7 +13,7 @@ bool Kinect::get_skeleton_position()
     NUI_SKELETON_FRAME skeletonFrame = { 0 };
     HRESULT hr = m_device->NuiSkeletonGetNextFrame(0, &skeletonFrame);
     
-    //m_device->NuiTransformSmooth(&skeletonFrame, NULL);
+    m_device->NuiTransformSmooth(&skeletonFrame, NULL);
     
     for (int j = 0; j < NUI_SKELETON_COUNT; ++j)
     {
@@ -24,7 +24,7 @@ bool Kinect::get_skeleton_position()
             m_newFrameCb();
             auto& skd = skeletonFrame.SkeletonData[j];
             
-            for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
+            /*for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
             {
                 USHORT depth;
                 LONG x, y;
@@ -32,7 +32,7 @@ bool Kinect::get_skeleton_position()
                 skd.SkeletonPositions[i].x = x;
                 skd.SkeletonPositions[i].y = y;
                 skd.SkeletonPositions[i].z = depth;
-            }
+            }*/
             m_newPointCb(skd);
             return true;
         }
