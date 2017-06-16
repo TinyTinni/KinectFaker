@@ -13,7 +13,7 @@ bool Kinect::get_skeleton_position()
     NUI_SKELETON_FRAME skeletonFrame = { 0 };
     HRESULT hr = m_device->NuiSkeletonGetNextFrame(0, &skeletonFrame);
     
-    m_device->NuiTransformSmooth(&skeletonFrame, NULL);
+    //m_device->NuiTransformSmooth(&skeletonFrame, NULL);
     
     for (int j = 0; j < NUI_SKELETON_COUNT; ++j)
     {
@@ -21,17 +21,19 @@ bool Kinect::get_skeleton_position()
 
         if (NUI_SKELETON_TRACKED == trackingState)
         {
-            if (m_record)
-                m_newFrameCb();
-            const auto& skd = skeletonFrame.SkeletonData[j];
+            m_newFrameCb();
+            auto& skd = skeletonFrame.SkeletonData[j];
+            
             for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
             {
                 USHORT depth;
                 LONG x, y;
                 NuiTransformSkeletonToDepthImage(skd.SkeletonPositions[i], &x, &y, &depth);
-                if (m_record)
-                    m_newPointCb(i, x, y, depth);
+                skd.SkeletonPositions[i].x = x;
+                skd.SkeletonPositions[i].y = y;
+                skd.SkeletonPositions[i].z = depth;
             }
+            m_newPointCb(skd);
             return true;
         }
         else if (j + 1 == NUI_SKELETON_COUNT) return false;
@@ -64,6 +66,7 @@ void Kinect::enable()
     //}
 
     // Look at each Kinect sensor
+    iSensorCount = 1;
     for (int i = 0; i < iSensorCount; ++i)
     {
         // Create the sensor so we can check status, if we can't create it, move on to the next

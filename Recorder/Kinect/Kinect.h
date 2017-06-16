@@ -2,6 +2,7 @@
 
 #define NOMINMAX
 #include <Windows.h>
+
 #include <NuiApi.h>
 #include <array>
 
@@ -17,7 +18,7 @@ class Kinect
     bool m_record;
 
     std::function<void()> m_newFrameCb;
-    std::function<void(int, long, long, unsigned short)> m_newPointCb;
+    std::function<void(const NUI_SKELETON_DATA& skd)> m_newPointCb;
 
 public:
 
@@ -31,7 +32,7 @@ public:
     {
         m_newFrameCb = std::move(c);
     }
-    inline void set_new_point_callback(std::function<void(int, long, long, unsigned short)> c)
+    inline void set_new_point_callback(std::function<void(const NUI_SKELETON_DATA& skd)> c)
     {
         m_newPointCb = std::move(c);
     }

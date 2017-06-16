@@ -30,7 +30,7 @@ ID3D11VertexShader* g_vertex_shader = nullptr;
 ID3D11PixelShader*  g_pixel_shader  = nullptr;
 ID3D11InputLayout*  g_shader_layout = nullptr;
 ID3D11Buffer*       g_v_buffer      = nullptr;
-std::unique_ptr<Reader> g_kinect;
+std::unique_ptr<Kinect> g_kinect;
 
 void Alloc_Ressources(ID3D11Device * device, ID3D11DeviceContext * context)
 {
@@ -104,7 +104,7 @@ void Alloc_Ressources(ID3D11Device * device, ID3D11DeviceContext * context)
     data.pSysMem = vertex_pos;
     device->CreateBuffer(&buff_desc, &data, &g_v_buffer);
 
-    g_kinect.reset(new Reader());
+    g_kinect.reset(new Kinect());
 }
 
 bool Render(ID3D11Device * device, ID3D11DeviceContext * context)
@@ -117,7 +117,7 @@ bool Render(ID3D11Device * device, ID3D11DeviceContext * context)
     D3D11_MAPPED_SUBRESOURCE resource;
     context->Map(g_v_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
     
-    const bool newframe = g_kinect->get_skeleton_position((float*)resource.pData);
+    const bool newframe = g_kinect->get_skeleton_position(gsl::make_span<float>((float*)resource.pData, 3 * 2 * skeleton_joints));
     context->Unmap(g_v_buffer, 0);
     if (!newframe)
         return false;

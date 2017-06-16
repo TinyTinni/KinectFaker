@@ -12,20 +12,26 @@ int main()
     {
         //write output
 
-        ksk::Scene scene;
-        ksk::Frame* frame;
-        ksk::SkeletonData* data;
-        auto newFrame = [&scene, &frame, &data]()
+        kif::Scene scene;
+        kif::Frame* frame;
+        auto newFrame = [&scene, &frame]()
         {
             frame = scene.add_frames();
-            data = frame->add_skeleton_data();
         };
-        auto newPointCB = [&data](size_t id, long x, long y, unsigned short depth)
+        auto newPointCB = [&frame](const NUI_SKELETON_DATA& skd)
         {
-            ksk::SkeletonData::Vector3* vec3 = data->add_joints();
-            vec3->set_x(x);
-            vec3->set_y(y);
-            vec3->set_z(depth);
+            kif::SkeletonData* data = frame->add_skeleton_data();
+            data->set_etrackingstate(skd.eTrackingState);
+
+            for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
+            {
+                auto vec = data->add_skeletonpositions();
+                vec->set_x(skd.SkeletonPositions[i].x);
+                vec->set_y(skd.SkeletonPositions[i].y);
+                vec->set_z(skd.SkeletonPositions[i].z);
+                vec->set_w(skd.SkeletonPositions[i].w);
+                data->add_eskeletonpositiontrackingstate(skd.eSkeletonPositionTrackingState[i]);
+            }
         };
 
         Kinect kinect;
@@ -44,12 +50,14 @@ int main()
 
         kinect.stop_record();
 
-        std::ofstream file("test_file.ksk");
+        std::ofstream file("test_file.kif");
         scene.SerializePartialToOstream(&file);
+
+        std::cout << "cauptured frames: " << scene.frames_size() << std::endl;
+
     }
 
     google::protobuf::ShutdownProtobufLibrary();
-
     system("Pause");
 
     return 0;

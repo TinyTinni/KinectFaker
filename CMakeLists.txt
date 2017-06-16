@@ -13,6 +13,38 @@ find_package( Protobuf REQUIRED )
 
 protobuf_generate_cpp(PROTO_SRC PROTO_HDR "KinectFileDef.proto")
 
+## Faker library
+set(SUBHOOK_NO_TESTS ON)
+set(SUBHOOK_STATIC ON)
+
+add_subdirectory("Faker/subhook")
+
+set (SOURCES
+	"KinectFileDef.proto"
+	"Faker/NuiApi_Faker.h"
+	"Faker/NuiApi_Faker.cpp"
+	"Faker/NuiSensor_Faker.h"
+	"Faker/NuiSensor_Faker.cpp"
+	)
+	
+add_library( Kinect_Faker "${SOURCES};${PROTO_SRC}" "${PROTO_HDR}" )
+
+target_include_directories(Kinect_Faker  
+	PUBLIC
+	${KinectSDK_INCLUDE_DIRS} 
+	PRIVATE
+	${PROTOBUF_INCLUDE_DIR} 
+	${CMAKE_CURRENT_BINARY_DIR}
+	#submodules
+	"Faker/subhook"
+	"Faker/boost_preprocessor/include"
+	)
+target_link_libraries(Kinect_Faker
+	protobuf::libprotobuf
+	subhook
+	${KinectSDK_LIBRARIES}
+	)
+	
 ## Recorder
 set (SOURCES
 	"KinectFileDef.proto"
@@ -41,7 +73,7 @@ target_link_libraries(Recorder PUBLIC
 	protobuf::libprotobuf
 	)
 
-## Player
+## (optional) Player - plays ksk files
 set (SOURCES
 	"KinectFileDef.proto"
 	"Player/main.cpp"
@@ -60,20 +92,21 @@ if(BUILD_PLAYER)
 	
 	target_include_directories(Player 
 		PUBLIC 
-		${KinectSDK_INCLUDE_DIRS} 
+		${KinectSDK_INCLUDE_DIRS}
+		"Faker"
 		${PROTOBUF_INCLUDE_DIR}
 		PRIVATE 
 		${CMAKE_CURRENT_BINARY_DIR}
 		)
 	target_link_libraries(Player 
 		PUBLIC
-		${KinectSDK_LIBRARIES} 
+		Kinect_Faker
 		protobuf::libprotobuf
 		)
 		
 	target_compile_definitions(Player
 		PUBLIC
-		"-D_UNICODE"
-		"_DNOMINMAX"
+		-D_UNICODE
+		-DNOMINMAX
 		)
 endif(BUILD_PLAYER)

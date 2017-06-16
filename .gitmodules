@@ -1,0 +1,6 @@
+[submodule "Faker/subhook"]
+	path = Faker/subhook
+	url = https://github.com/Zeex/subhook.git
+[submodule "Faker/boost_preprocessor"]
+	path = Faker/boost_preprocessor
+	url = https://github.com/boostorg/preprocessor.git
