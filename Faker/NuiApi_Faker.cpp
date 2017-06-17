@@ -30,6 +30,7 @@ int fake_index = -1;
     (NuiCreateSensorByIndex)\
     (NuiGetSensorCount)
 
+
 //create global hooks with hook_<functionname> for each function in HOOKS
 #define HOOKS_DEFINE_MACRO(r, data, elem)\
         subhook_t BOOST_PP_CAT(data, elem);
@@ -49,12 +50,9 @@ HRESULT my_NuiCreateSensorByIndex(_In_ int index, _Out_ INuiSensor ** ppNuiSenso
         return E_OUTOFMEMORY;
 
     kif::Scene scene;
-    //scene.ParseFromIstream(&scene_file);
     if (!scene.ParseFromIstream(&scene_file))
-    {
-        OutputDebugStringA(scene.DebugString().c_str());
         return E_OUTOFMEMORY;
-    }
+    
     auto frames = scene.frames_size();
     *ppNuiSensor = new INuiSensor_Faker(std::move(scene));
     return S_OK;

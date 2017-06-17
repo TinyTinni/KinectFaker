@@ -9,7 +9,7 @@
 
 bool Kinect::get_skeleton_position(gsl::span<float> output)
 {
-    if (WAIT_OBJECT_0 != WaitForSingleObject(m_hNextSkeletonEvent, 0))
+    if (WAIT_OBJECT_0 != WaitForSingleObject(m_hNextSkeletonEvent, INFINITE))
         false;
 
     NUI_SKELETON_FRAME skeletonFrame = { 0 };

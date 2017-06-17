@@ -3,20 +3,6 @@
 #include <iostream>
 #include <utility>
 
-void CALLBACK NextFrameProc(
-    LPVOID lpArg,               // Data value
-    DWORD dwTimerLowValue,      // Timer low value
-    DWORD dwTimerHighValue)    // Timer high value
-
-{
-    // Formal parameters not used in this example.
-    UNREFERENCED_PARAMETER(dwTimerLowValue);
-    UNREFERENCED_PARAMETER(dwTimerHighValue);
-
-    HANDLE *pEvents = (HANDLE *)lpArg;
-    SetEvent(*pEvents);
-}
-
 
 ULONG INuiSensor_Faker::Release()
 {
@@ -65,17 +51,12 @@ HRESULT INuiSensor_Faker::NuiInitialize(DWORD dwFlags)
     if (!(dwFlags & NUI_INITIALIZE_FLAG_USES_SKELETON))
         return E_INVALIDARG;
 
-    m_nextFrameTimer = CreateWaitableTimer(
-        NULL,                   // Default security attributes
-        FALSE,                  // Create auto-reset timer
-        NULL);       // Name of waitable timer
-
     return S_OK;
 }
 
 void INuiSensor_Faker::NuiShutdown(void)
 {
-    CloseHandle(m_nextFrameTimer);
+    DeleteTimerQueueTimer(NULL,m_nextFrameTimer,NULL);
 }
 
 HRESULT INuiSensor_Faker::NuiSetFrameEndEvent(HANDLE hEvent, DWORD dwFrameEventFlag)
@@ -133,19 +114,29 @@ HRESULT INuiSensor_Faker::NuiCameraElevationGetAngle(LONG * plAngleDegrees)
     return E_NOTIMPL;
 }
 
+VOID CALLBACK FrameCb(
+    _In_ PVOID   lpParameter,
+    _In_ BOOLEAN TimerOrWaitFired
+)
+{
+    UNREFERENCED_PARAMETER(TimerOrWaitFired);
+    HANDLE* pEvent = reinterpret_cast<HANDLE*>(lpParameter);
+    SetEvent(*pEvent);
+}
+
 HRESULT INuiSensor_Faker::NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWORD dwFlags)
 {
-
-    LARGE_INTEGER liDueTime;
     m_nextSkeletonEvent = hNextFrameEvent;
-    liDueTime.QuadPart = 1LL;
-    return SetWaitableTimer(
-        m_nextFrameTimer,           // Handle to the timer object
-        &liDueTime,       // When timer will become signaled
-        30,             // Periodic timer interval of 2 seconds
-        NextFrameProc,     // Completion routine
-        &m_nextSkeletonEvent,          // Argument to the completion routine
-        FALSE);          // Do not restore a suspended system
+    const bool r = CreateTimerQueueTimer(
+        &m_nextFrameTimer,
+        NULL, //TimerQueue
+        FrameCb,
+        &m_nextSkeletonEvent,
+        30, 
+        30,//todo: save fps in file?
+        WT_EXECUTEDEFAULT
+    );
+    return (r) ? S_OK : ERROR_INVALID_OPERATION;
 }
 
 HRESULT INuiSensor_Faker::NuiSkeletonTrackingDisable(void)
@@ -192,37 +183,16 @@ HRESULT INuiSensor_Faker::NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NU
         cur->Position = VecVecCast(data.position());
         for (int j = 0; j < data.skeletonpositions_size(); ++j)
         {
-            //cur->eSkeletonPositionTrackingState[j] = (NUI_SKELETON_POSITION_TRACKING_STATE)data.eskeletonpositiontrackingstate(j);
+            cur->eSkeletonPositionTrackingState[j] = (NUI_SKELETON_POSITION_TRACKING_STATE)data.eskeletonpositiontrackingstate(j);
             cur->SkeletonPositions[j] = VecVecCast(data.skeletonpositions(j));
         }
         cur->dwQualityFlags = data.dwqualityflags();
-        /*
-        
-    NUI_SKELETON_TRACKING_STATE eTrackingState;
-    DWORD dwTrackingID;
-    DWORD dwEnrollmentIndex;
-    DWORD dwUserIndex;
-    Vector4 Position;
-    Vector4 SkeletonPositions[ 20 ];
-    NUI_SKELETON_POSITION_TRACKING_STATE eSkeletonPositionTrackingState[ 20 ];
-    DWORD dwQualityFlags;
-        */
     }
-        /*
-        LARGE_INTEGER liTimeStamp;
-    DWORD dwFrameNumber;
-    DWORD dwFlags;
-    Vector4 vFloorClipPlane;
-    Vector4 vNormalToGravity;
-    NUI_SKELETON_DATA SkeletonData[NUI_SKELETON_COUNT];
-        */
-
     const int countFrames = m_scene.frames_size();
 
     if (++m_currentFrameIdx == m_scene.frames_size())
         m_currentFrameIdx = 0;
     
-    Sleep(30);
     ResetEvent(m_nextSkeletonEvent);
 
     return S_OK;
