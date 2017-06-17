@@ -163,10 +163,10 @@ HRESULT INuiSensor_Faker::NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NU
     const auto VecVecCast = [](const kif::SkeletonData_Vector& vec) -> Vector4 
     {
         Vector4 rv;
-        rv.x = (FLOAT)vec.x();
-        rv.y = (FLOAT)vec.y();
-        rv.z = (FLOAT)vec.z();
-        rv.w = (FLOAT)vec.w();
+        rv.x = vec.x();
+        rv.y = vec.y();
+        rv.z = vec.z();
+        rv.w = vec.w();
         return rv;
     };
 

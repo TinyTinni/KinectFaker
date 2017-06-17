@@ -37,7 +37,6 @@ target_include_directories(Kinect_Faker
 	${CMAKE_CURRENT_BINARY_DIR}
 	#submodules
 	"Faker/subhook"
-	"Faker/boost_preprocessor/include"
 	)
 target_link_libraries(Kinect_Faker
 	protobuf::libprotobuf
