@@ -6,6 +6,9 @@ project( KinectFaker )
 find_package( KinectSDK REQUIRED )
 find_package( Protobuf REQUIRED )
 
+set(SUBHOOK_NO_TESTS ON)
+set(SUBHOOK_STATIC ON)
+add_subdirectory("Faker/subhook")
 
 # protobuf lib
 protobuf_generate_cpp(PROTO_SRC PROTO_HDR "KinectFileDef.proto")

@@ -100,7 +100,7 @@ fake_kinect_t fake_kinect_add(const char* strFile)
     // check, if file exists (change with c++17 filesystem in the future
     {
         std::ifstream scene_file;
-        scene_file.open(strFile, std::ios::in);
+        scene_file.open(strFile, std::ios::in | std::ios::binary);
         if (!scene_file.is_open())
             return nullptr;
     }

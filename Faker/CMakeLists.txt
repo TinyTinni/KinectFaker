@@ -2,9 +2,6 @@ cmake_minimum_required( VERSION 3.1 )
 project( Kinect_Fake )
 
 ## Faker library
-set(SUBHOOK_NO_TESTS ON PARENT_SCOPE)
-set(SUBHOOK_STATIC ON PARENT_SCOPE)
-add_subdirectory("subhook")
 
 set (SOURCES
     "${CMAKE_SOURCE_DIR}/Readme.md"
