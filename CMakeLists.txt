@@ -19,39 +19,42 @@ set(SUBHOOK_STATIC ON)
 
 add_subdirectory("Faker/subhook")
 
+add_library(protobuf_def ${PROTO_SRC} "${PROTO_HDR};KinectFileDef.proto")
+target_include_directories(protobuf_def PUBLIC ${PROTOBUF_INCLUDE_DIR})
+target_link_libraries(protobuf_def PUBLIC protobuf::libprotobuf)
+
 set (SOURCES
-	"KinectFileDef.proto"
+	"Readme.md"
+	
 	"Faker/NuiApi_Faker.h"
 	"Faker/NuiApi_Faker.cpp"
 	"Faker/NuiSensor_Faker.h"
 	"Faker/NuiSensor_Faker.cpp"
 	)
 	
-add_library( Kinect_Faker "${SOURCES};${PROTO_SRC}" "${PROTO_HDR}" )
+add_library( Kinect_Faker "${SOURCES}")
 
 target_include_directories(Kinect_Faker  
 	PUBLIC
 	${KinectSDK_INCLUDE_DIRS} 
 	PRIVATE
-	${PROTOBUF_INCLUDE_DIR} 
-	${CMAKE_CURRENT_BINARY_DIR}
+	${CMAKE_CURRENT_BINARY_DIR} # for proto
 	#submodules
 	"Faker/subhook"
 	)
 target_link_libraries(Kinect_Faker
-	protobuf::libprotobuf
+	protobuf_def
 	subhook
 	${KinectSDK_LIBRARIES}
 	)
 	
 ## Recorder
 set (SOURCES
-	"KinectFileDef.proto"
 	"Recorder/main.cpp"
 	"Recorder/Kinect/Kinect.h"
 	"Recorder/Kinect/Kinect.cpp"
 	)
-add_executable( Recorder "${SOURCES};${PROTO_SRC}" "${PROTO_HDR}" )
+add_executable( Recorder "${SOURCES}" )
 set_target_properties( Recorder PROPERTIES
 	RESOURCE "KinectFileDef.proto"
 	)
@@ -62,19 +65,17 @@ set_property( DIRECTORY PROPERTY
 
 target_include_directories(Recorder 
 	PUBLIC 
-	${KinectSDK_INCLUDE_DIRS} 
-	${PROTOBUF_INCLUDE_DIR}
+	${KinectSDK_INCLUDE_DIRS}
 	PRIVATE 
 	${CMAKE_CURRENT_BINARY_DIR}
 	)
 target_link_libraries(Recorder PUBLIC
 	${KinectSDK_LIBRARIES} 
-	protobuf::libprotobuf
+	protobuf_def
 	)
 
 ## (optional) Player - plays ksk files
 set (SOURCES
-	"KinectFileDef.proto"
 	"Player/main.cpp"
 	"Player/reader.h"
 	"Player/reader.cpp"
@@ -84,7 +85,7 @@ set (SOURCES
 	
 option (BUILD_PLAYER OFF)	
 if(BUILD_PLAYER)
-	add_executable( Player WIN32 "${SOURCES};${PROTO_SRC}" "${PROTO_HDR}")
+	add_executable( Player WIN32 "${SOURCES}")
 	set_target_properties( Player PROPERTIES
 		RESOURCE "KinectFileDef.proto"
 		)
@@ -93,14 +94,12 @@ if(BUILD_PLAYER)
 		PUBLIC 
 		${KinectSDK_INCLUDE_DIRS}
 		"Faker"
-		${PROTOBUF_INCLUDE_DIR}
 		PRIVATE 
 		${CMAKE_CURRENT_BINARY_DIR}
 		)
 	target_link_libraries(Player 
 		PUBLIC
 		Kinect_Faker
-		protobuf::libprotobuf
 		)
 		
 	target_compile_definitions(Player

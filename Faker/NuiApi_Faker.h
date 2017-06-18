@@ -8,6 +8,7 @@
     
     Sets up system hooks for all Nui*** functions, if necessary.
 
+    maybe deprecated, cannot decide
 
     @param strFile Filepath of the recorded KinectFile 
 
@@ -16,8 +17,15 @@
 */
 HRESULT kinect_faker_init(const char* strFile);
 
+
 /** Frees all ressources and remove all hooks
 
+maybe deprecated, cannot decide
 */
 void kinect_faker_release();
 
+struct FakeDevice;
+typedef FakeDevice* fake_kinect_t;
+
+fake_kinect_t fake_kinect_add(const char* strFile);
+void fake_kinect_free(fake_kinect_t& hnd);
