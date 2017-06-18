@@ -80,7 +80,7 @@ HRESULT my_NuiGetSensorCount(_In_ int * pCount)
 
     if (FAILED(r))
         return r;
-    *pCount += currentDevices.size();
+    *pCount += static_cast<int>(currentDevices.size());
     return S_OK;
 }
 
