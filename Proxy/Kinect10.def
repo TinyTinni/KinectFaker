@@ -1,0 +1,27 @@
+LIBRARY Kinect10.dll
+EXPORTS
+    NuiGetSensorCount    @5
+    NuiCreateSensorByIndex    @6
+    NuiCameraElevationGetAngle    @7
+    NuiCameraElevationSetAngle    @8
+    NuiImageGetColorPixelCoordinatesFromDepthPixel    @9
+    NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution    @10
+    NuiImageStreamGetNextFrame    @11
+    NuiImageStreamOpen    @12
+    NuiImageStreamReleaseFrame    @13
+    NuiInitialize    @14
+    NuiSetFrameEndEvent    @15
+    NuiShutdown    @16
+    NuiSkeletonGetNextFrame    @17
+    NuiSkeletonTrackingDisable    @18
+    NuiSkeletonTrackingEnable    @19
+    NuiTransformSmooth    @20
+    NuiCreateSensorById    @21
+    NuiSetDeviceStatusCallback    @22
+    NuiImageStreamSetImageFrameFlags    @23
+    NuiImageStreamGetImageFrameFlags    @24
+    NuiGetAudioSource    @25
+    NuiSkeletonSetTrackedSkeletons    @26
+    NuiSkeletonCalculateBoneOrientations    @27
+    NuiCreateCoordinateMapperFromParameters    @28
+    NuiCreateDepthFilter    @29

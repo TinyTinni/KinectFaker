@@ -4,10 +4,9 @@
 #include <NuiSensor.h>
 #include <NuiSkeleton.h>
 #include <NuiApi.h>
-#include <NuiApi_Faker.h>
 
 
-bool Kinect::get_skeleton_position(gsl::span<float> output)
+bool Kinect::get_skeleton_position(float* output)
 {
     if (WAIT_OBJECT_0 != WaitForSingleObject(m_hNextSkeletonEvent, INFINITE))
         false;
@@ -26,7 +25,7 @@ bool Kinect::get_skeleton_position(gsl::span<float> output)
             // We're tracking the skeleton, draw it
             const auto& skd = skeletonFrame.SkeletonData[i];
             for (i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
-                transformPoint(gsl::span<float, 3>(&output[i * 2 * 3], 3), skd.SkeletonPositions[i]);
+                transformPoint(&output[i * 2 * 3], skd.SkeletonPositions[i]);
 
             //todo: fill
             auto cpy = [&output](const int srcIdx, const int dstIdx)
@@ -78,11 +77,9 @@ Kinect::~Kinect()
     }
     if (m_hNextSkeletonEvent != INVALID_HANDLE_VALUE)
         CloseHandle(m_hNextSkeletonEvent);
-
-    kinect_faker_release();
 }
 
-void Kinect::transformPoint(gsl::span<float, 3>& out, const Vector4& skd)
+void Kinect::transformPoint(float* out, const Vector4& skd)
 {
     // Kinect resolution
     constexpr int        cScreenWidth = 320;
@@ -157,6 +154,5 @@ Kinect::Kinect() :
     m_hNextSkeletonEvent(INVALID_HANDLE_VALUE),
     m_isOn(false)
 {
-    kinect_faker_init("test_file.kif");
     enable();
 }

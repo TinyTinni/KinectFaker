@@ -1,20 +1,13 @@
 #include "NuiApi_Faker.h"
+#include "NuiSensor_Faker.h"
 
 #include <fstream> //fstream
 #include <utility> //move
 #include <vector>
 #include <memory>
-
-//delete later
-#include <iostream>
-
-#include "NuiSensor_Faker.h"
-#include "KinectFileDef.pb.h"
-
 #include <string>
 
-std::string fname = "";
-int fake_index = -1;
+#include <KinectFileDef.pb.h>
 
 //todo: multi devices
 struct FakeDevice
@@ -25,19 +18,8 @@ struct FakeDevice
 
 std::vector<std::unique_ptr<FakeDevice>> currentDevices;
 
-// use BOOST_PP
-//#define HOOKS \
-//    (NuiCreateSensorByIndex)\
-//    (NuiGetSensorCount)
-
 subhook_t hook_NuiCreateSensorByIndex = nullptr;
 subhook_t hook_NuiGetSensorCount = nullptr;
-
-
-//create global hooks with hook_<functionname> for each function in HOOKS
-//#define HOOKS_DEFINE_MACRO(r, data, elem)\
-//        subhook_t BOOST_PP_CAT(data, elem);
-//BOOST_PP_SEQ_FOR_EACH(HOOKS_DEFINE_MACRO, hook_, HOOKS);
 
 
 //------------------------ Hook Functions ------------------- //
@@ -93,8 +75,8 @@ fake_kinect_t fake_kinect_add(const char* strFile)
         hook_NuiGetSensorCount = subhook_new((void*)NuiGetSensorCount, (void*)my_NuiGetSensorCount, SUBHOOK_OPTION_64BIT_OFFSET);
         hook_NuiCreateSensorByIndex = subhook_new((void*)NuiCreateSensorByIndex, (void*)my_NuiCreateSensorByIndex, SUBHOOK_OPTION_64BIT_OFFSET);
         // install hooks
-        subhook_install(hook_NuiCreateSensorByIndex);
-        subhook_install(hook_NuiGetSensorCount);
+        //subhook_install(hook_NuiCreateSensorByIndex);
+        //subhook_install(hook_NuiGetSensorCount);
     }
 
     // check, if file exists (change with c++17 filesystem in the future

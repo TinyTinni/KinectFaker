@@ -117,7 +117,7 @@ bool Render(ID3D11Device * device, ID3D11DeviceContext * context)
     D3D11_MAPPED_SUBRESOURCE resource;
     context->Map(g_v_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
     
-    const bool newframe = g_kinect->get_skeleton_position(gsl::make_span<float>((float*)resource.pData, 3 * 2 * skeleton_joints));
+    const bool newframe = g_kinect->get_skeleton_position(reinterpret_cast<float*>(resource.pData));
     context->Unmap(g_v_buffer, 0);
     if (!newframe)
         return false;

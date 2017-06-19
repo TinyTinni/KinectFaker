@@ -14,13 +14,13 @@ add_executable( Player WIN32 "${SOURCES}")
 target_include_directories(Player 
 	PUBLIC 
 	${KinectSDK_INCLUDE_DIRS}
-	${KINECT_FAKE_INCLUDE_DIR}
 	PRIVATE 
 	${CMAKE_CURRENT_BINARY_DIR}
 	)
 target_link_libraries(Player 
 PUBLIC
-	${KINECT_FAKE_LIBRARIES}
+	${KinectSDK_LIBRARIES}
+	protobuf_def
 	)
 	
 target_compile_definitions(Player
@@ -28,3 +28,16 @@ target_compile_definitions(Player
 	-D_UNICODE
 	-DNOMINMAX
 	)
+	
+# get the proxy dll
+add_custom_command(TARGET Player POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    $<TARGET_FILE:Kinect10>              
+    $<TARGET_FILE_DIR:Player>)
+
+add_custom_command(TARGET Player POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    $<TARGET_FILE:Kinect10>              
+    $<TARGET_FILE_DIR:Player>)
+	
+add_dependencies(Player Kinect10)

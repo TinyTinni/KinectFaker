@@ -6,10 +6,6 @@ project( KinectFaker )
 find_package( KinectSDK REQUIRED )
 find_package( Protobuf REQUIRED )
 
-set(SUBHOOK_NO_TESTS ON)
-set(SUBHOOK_STATIC ON)
-add_subdirectory("Faker/subhook")
-
 # protobuf lib
 protobuf_generate_cpp(PROTO_SRC PROTO_HDR "KinectFileDef.proto")
 add_library(protobuf_def ${PROTO_SRC} "${PROTO_HDR};KinectFileDef.proto")
@@ -17,7 +13,7 @@ target_include_directories(protobuf_def PUBLIC ${PROTOBUF_INCLUDE_DIR})
 target_link_libraries(protobuf_def PUBLIC protobuf::libprotobuf)
 
 # Faker library
-add_subdirectory("Faker")
+add_subdirectory("Proxy")
 
 ## Recorder
 add_subdirectory("Recorder")	

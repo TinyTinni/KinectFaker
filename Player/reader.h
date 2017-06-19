@@ -4,8 +4,6 @@
 #include <NuiApi.h>
 #include <array>
 
-#include <gsl/gsl>
-
 constexpr int skeleton_joints = NUI_SKELETON_POSITION_COUNT;
 
 class Kinect
@@ -14,12 +12,12 @@ class Kinect
     HANDLE m_hNextSkeletonEvent;
     bool m_isOn;
 
-    void transformPoint(gsl::span<float, 3>& out, const Vector4& skd);
+    void transformPoint(float* out, const Vector4& skd);
 
 public:
     Kinect();
     /// get skeleton joint positions in range of [0,1]
-    bool get_skeleton_position(gsl::span<float> out);
+    bool get_skeleton_position(float* out);
     bool isOn() { return m_isOn; }
     void enable();
     ~Kinect();
