@@ -17,12 +17,26 @@ add_subdirectory("Proxy")
 
 ## Recorder
 add_subdirectory("Recorder")	
-set_property( DIRECTORY PROPERTY 
-	VS_STARTUP_PROJECT "Recorder"
-	)
 
 ## (optional) Player - plays ksk files
 option (BUILD_PLAYER ON)	
 if(BUILD_PLAYER)
 	add_subdirectory("Player")
 endif(BUILD_PLAYER)
+
+option (BUILD_TESTS ON)
+if (BUILD_TESTS)
+	SET(CTEST_OUTPUT_ON_FAILURE ON)
+	enable_testing()
+	add_subdirectory("tests")
+endif()
+
+if (BUILD_TEST)
+	set_property( DIRECTORY PROPERTY 
+		VS_STARTUP_PROJECT "tests"
+		)
+else()
+	set_property( DIRECTORY PROPERTY 
+		VS_STARTUP_PROJECT "Recorder"
+		)
+endif()

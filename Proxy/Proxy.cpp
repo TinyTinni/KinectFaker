@@ -20,6 +20,25 @@ struct FakeDevice
     size_t idx;
 };
 
+bool create_devices()
+{
+    const char* strFile = "test_file.kif"; //todo load from file 
+    try
+    {
+        currentDevices.push_back(
+            std::make_unique<FakeDevice>(
+                FakeDevice{ strFile, currentDevices.size() }
+                )
+        );
+    }
+    catch (...)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 std::vector<std::unique_ptr<FakeDevice>> currentDevices;
 HMODULE kinectHndl = NULL;
 
@@ -46,22 +65,13 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
 
     kinectHndl = LoadLibraryEx("C:\\Windows\\System32\\Kinect10.dll",NULL,0);
 
-
-    const char* strFile = "test_file.kif"; //todo load from file 
-    try
-    {
-        currentDevices.push_back(
-            std::make_unique<FakeDevice>(
-                FakeDevice{ strFile, currentDevices.size() }
-                )
-        );
-    }
-    catch (...)
-    {
+    if (!kinectHndl)
         return false;
-    }
 
-    return kinectHndl != NULL;
+    if (!create_devices())
+        return false;
+
+    return true;
 
 }
 
@@ -102,7 +112,7 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
 
     std::ifstream scene_file(currentDevices[index]->filename, std::ios::binary);
     if (!scene_file.is_open())
-        return E_OUTOFMEMORY;
+        return STG_E_FILENOTFOUND;
 
     kif::Scene scene;
     if (!scene.ParseFromIstream(&scene_file))

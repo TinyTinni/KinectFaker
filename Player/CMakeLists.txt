@@ -34,10 +34,5 @@ add_custom_command(TARGET Player POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:Kinect10>              
     $<TARGET_FILE_DIR:Player>)
-
-add_custom_command(TARGET Player POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:Kinect10>              
-    $<TARGET_FILE_DIR:Player>)
 	
 add_dependencies(Player Kinect10)
