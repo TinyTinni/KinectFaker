@@ -56,7 +56,7 @@ set_target_properties(tests PROPERTIES
     "$(TargetDir)"
     )
     
-add_custom_command(TARGET tests POST_BUILD 
+add_custom_command(TARGET tests PRE_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:Kinect10>              
     $<TARGET_FILE_DIR:tests>)

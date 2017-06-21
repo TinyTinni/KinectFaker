@@ -13,13 +13,14 @@
 #include <KinectFileDef.pb.h>
 #include "NuiSensor_Faker.h"
 
-//#include <json.hpp>
-//using json = nlohmann::json;
+#include <json.hpp>
+namespace js = nlohmann;
 
 struct FakeDevice
 {
-    std::string filename;
-    size_t idx;
+    const std::string name;
+    const std::string filename;
+    const size_t idx;
 };
 
 
@@ -28,17 +29,43 @@ HMODULE kinectHndl = NULL;
 
 bool create_devices()
 {
-    const char* strFile = "test_file.kif"; //todo load from file 
+    const char* strFile = "fake_kinect.config"; 
+    std::ifstream file(strFile);
+    if (!file.is_open())
+        return true; // todo: logging
+    js::json config;
+
     try
     {
-        currentDevices.push_back(
-            std::make_unique<FakeDevice>(
-                FakeDevice{ strFile, currentDevices.size() }
-                )
-        );
+        config << file; // throws std::exceptions on parse error
+
+        const auto& devices = config.at("devices"); //throws out_of_range
+
+        for (auto it = std::cbegin(devices); it != std::cend(devices); ++it)
+        {
+            const auto& dev = it.value();
+            currentDevices.push_back( //throws out_of_memory
+                std::make_unique<FakeDevice>(
+                    FakeDevice{ it.key(),
+                dev["skeleton_file"], //skeleton file
+                currentDevices.size() //device id
+            }
+            ));
+        }
+    }
+    catch (const std::out_of_range& exp)
+    {
+        std::cerr << "Warning: No Kinect Fake Device Found.";
+        return false;
+    }
+    catch (const std::exception& exp)
+    {
+        std::cerr << "Kinect Faker Error: " << exp.what() << "\n";
+        return false;
     }
     catch (...)
     {
+        std::cerr << "Kinect Faker: Unknown Error.\n";
         return false;
     }
 
@@ -54,25 +81,25 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
     switch (nReason)
     {
     case DLL_PROCESS_ATTACH:
-
         //  For optimization.
-
         DisableThreadLibraryCalls(hDllHandle);
-
         break;
-
     case DLL_PROCESS_DETACH:
-
         break;
     }
 
     kinectHndl = LoadLibraryEx("C:\\Windows\\System32\\Kinect10.dll",NULL,0);
 
+    // Cannot find original .dll. Return false until the proxy-dll was tested without installed Kinect.
+    // Anyway, it is not a good idea to not install at least the Kinect Redist
     if (!kinectHndl)
         return false;
 
+
+    // Don't return false. Even if there are parsing errors or warnings,
+    // library should be able redirect to the original Kinect10.dll even without Fake Devices
     if (!create_devices())
-        return false;
+        return true;
 
     return true;
 
@@ -111,7 +138,7 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
     }
     index -= pCount;
     if (index >= currentDevices.size())
-        return ERROR_INVALID_INDEX; //msdn doc is wrong with returning values. Check correct value here
+        return ERROR_INVALID_INDEX; //msdn doc is wrong with returning values for this function. Check correct values by testing...
 
     std::ifstream scene_file(currentDevices[index]->filename, std::ios::binary);
     if (!scene_file.is_open())

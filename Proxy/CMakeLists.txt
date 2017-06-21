@@ -7,9 +7,9 @@ set (SOURCES
     "${CMAKE_SOURCE_DIR}/Readme.md"
     "NuiSensor_Faker.h"
     "NuiSensor_Faker.cpp"
-	"Proxy.cpp"
-	
-	"Kinect10.def"
+    "Proxy.cpp"
+    
+    "Kinect10.def"
     )
 
 add_library( Kinect10 SHARED "${SOURCES}")
@@ -18,12 +18,12 @@ add_library( Kinect10 SHARED "${SOURCES}")
 find_path(
     JSON_INCLUDE_DIR 
     NAMES json.hpp
-	PATH_SUFFIXES "nlohmann"
+    PATH_SUFFIXES "nlohmann"
     DOC "nlohmann-json include dir"
 )
 
 if (NOT JSON_INCLUDE_DIR)
-	message(STATUS "Could not find nlohmann-json. Create Download target.")
+    message(STATUS "Could not find nlohmann-json. Create Download target.")
     include(ExternalProject)
     find_package(Git REQUIRED)
     ExternalProject_Add(
@@ -45,11 +45,15 @@ endif()
 
 target_include_directories(Kinect10  
 PRIVATE
-	${KinectSDK_INCLUDE_DIRS} 
+    ${KinectSDK_INCLUDE_DIRS} 
     ${CMAKE_BINARY_DIR} # for proto
     ${JSON_INCLUDE_DIR}
     )
 target_link_libraries(Kinect10
 PUBLIC
     protobuf_def    
+    )
+target_compile_definitions(Kinect10
+    PUBLIC
+    -DNOMINMAX
     )
