@@ -9,6 +9,7 @@ find_path(
 )
 
 if (NOT CATCH_INCLUDE_DIR)
+    message(STATUS "Could not find Catch. Create download target.")
     include(ExternalProject)
     find_package(Git REQUIRED)
     ExternalProject_Add(
@@ -25,8 +26,9 @@ if (NOT CATCH_INCLUDE_DIR)
     
     # Expose required variable (CATCH_INCLUDE_DIR) to parent scope
     ExternalProject_Get_Property(catch source_dir)
-    set(CATCH_INCLUDE_DIR ${source_dir}/single_include CACHE INTERNAL "Path to include folder for Catch")
+    set(CATCH_INCLUDE_DIR ${source_dir}/single_include)
 endif()
+
 
 
 set (SOURCES

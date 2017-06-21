@@ -13,12 +13,18 @@
 #include <KinectFileDef.pb.h>
 #include "NuiSensor_Faker.h"
 
-//todo: multi devices
+//#include <json.hpp>
+//using json = nlohmann::json;
+
 struct FakeDevice
 {
     std::string filename;
     size_t idx;
 };
+
+
+std::vector<std::unique_ptr<FakeDevice>> currentDevices;
+HMODULE kinectHndl = NULL;
 
 bool create_devices()
 {
@@ -38,9 +44,6 @@ bool create_devices()
 
     return true;
 }
-
-std::vector<std::unique_ptr<FakeDevice>> currentDevices;
-HMODULE kinectHndl = NULL;
 
 BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
     IN DWORD     nReason,

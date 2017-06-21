@@ -19,12 +19,12 @@ add_subdirectory("Proxy")
 add_subdirectory("Recorder")	
 
 ## (optional) Player - plays ksk files
-option (BUILD_PLAYER ON)	
+option (BUILD_PLAYER "Build Player" ON)	
 if(BUILD_PLAYER)
 	add_subdirectory("Player")
 endif(BUILD_PLAYER)
 
-option (BUILD_TESTS ON)
+option (BUILD_TESTS "Build Tests" ON)
 if (BUILD_TESTS)
 	SET(CTEST_OUTPUT_ON_FAILURE ON)
 	enable_testing()
