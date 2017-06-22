@@ -52,13 +52,18 @@ target_link_libraries(tests PUBLIC
     )
     
 set_target_properties(tests PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY
-    "$(TargetDir)"
+    #VS_DEBUGGER_WORKING_DIRECTORY
+    #"$(TargetDir)" #idk but the debugger doesnt start with this parameter
+    RUNTIME_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:Kinect10>
     )
     
-add_custom_command(TARGET tests PRE_BUILD 
+
+
+add_custom_command(TARGET tests POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:Kinect10>              
-    $<TARGET_FILE_DIR:tests>)
+    "${CMAKE_CURRENT_SOURCE_DIR}/test_file.kif"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fake_kinect.config"
+    
+    "$<TARGET_FILE_DIR:tests>")
     
 add_dependencies(tests Kinect10)
