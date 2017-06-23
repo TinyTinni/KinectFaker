@@ -34,6 +34,7 @@ endif()
 set (SOURCES
     "main.cpp"
     "SkeletonPosition.cpp"
+    "fake_kinect.config"
     )
 
 enable_testing()	

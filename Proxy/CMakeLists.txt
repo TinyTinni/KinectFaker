@@ -43,11 +43,39 @@ if (NOT JSON_INCLUDE_DIR)
     set(JSON_INCLUDE_DIR ${source_dir}/src)
 endif()
 
+find_path(
+    SPDLOG_INCLUDE_DIR 
+    NAMES spdlog.h
+    PATH_SUFFIXES "spdlog"
+    DOC "spdlog include dir"
+)
+if (NOT SPDLOG_INCLUDE_DIR)
+    message(STATUS "Could not find spdlog. Create Download target.")
+    include(ExternalProject)
+    find_package(Git REQUIRED)
+    ExternalProject_Add(
+        spdlog
+        PREFIX ${CMAKE_BINARY_DIR}/spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        TIMEOUT 10
+        UPDATE_COMMAND ${GIT_EXECUTABLE} pull
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ""
+        LOG_DOWNLOAD ON
+    )
+    
+    # Expose required variable (CATCH_INCLUDE_DIR) to parent scope
+    ExternalProject_Get_Property(spdlog source_dir)
+    set(SPDLOG_INCLUDE_DIR ${source_dir}/include)
+endif()
+
 target_include_directories(Kinect10  
 PRIVATE
     ${KinectSDK_INCLUDE_DIRS} 
     ${CMAKE_BINARY_DIR} # for proto
     ${JSON_INCLUDE_DIR}
+    ${SPDLOG_INCLUDE_DIR}
     )
 target_link_libraries(Kinect10
 PUBLIC
