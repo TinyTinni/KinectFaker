@@ -31,9 +31,10 @@
 #    KinectSDK_DIR                   - Kinect SDK v1 root directory. (Default $ENV{KINECTSDK10_DIR})
 #
 #    KinectToolkit_DIR               - Kinect Developer Toolkit v1 root directory. (Default $ENV{KINECT_TOOLKIT_DIR})
-#    KinectToolkit_FACE              - Check the box when using Face features. (Default uncheck)
-#    KinectToolkit_FUSION            - Check the box when using Fusion features. (Default uncheck)
-#    KinectToolkit_BACKGROUNDREMOVAL - Check the box when using Back Ground Removal features. (Default uncheck)
+#    KinectToolkit_FACE              - Check the box when using Face features. (Default unchecked)
+#    KinectToolkit_FUSION            - Check the box when using Fusion features. (Default unchecked)
+#    KinectToolkit_BACKGROUNDREMOVAL - Check the box when using Back Ground Removal features. (Default unchecked)
+#    KinectToolkit_INTERACTION       - Check the box when using Interaction features. (Default unchecked)
 #
 # Example to find Kinect SDK v1 and Kinect Developer Toolkit v1::
 #
@@ -170,9 +171,10 @@ message(STATUS "KinectSDK_FOUND : ${KinectSDK_FOUND}")
 option(KinectToolkit_FACE "Face features" FALSE)
 option(KinectToolkit_FUSION "Fusion features" FALSE)
 option(KinectToolkit_BACKGROUNDREMOVAL "Back Ground Removal features" FALSE)
+option(KinectToolkit_INTERACTION "Interaction feature" FALSE)
 
 set(KinectToolkit FALSE)
-if(KinectToolkit_FACE OR KinectToolkit_FUSION OR KinectToolkit_BACKGROUNDREMOVAL)
+if(KinectToolkit_FACE OR KinectToolkit_FUSION OR KinectToolkit_BACKGROUNDREMOVAL OR KinectToolkit_INTERACTION)
   set(KinectToolkit TRUE)
 endif()
 
@@ -247,6 +249,17 @@ if(KinectToolkit)
         list(APPEND KinectToolkit_LIBRARIES ${KinectToolkit_BACKGROUNDREMOVAL_LIBRARY})
       else()
         message(WARNING "In directory Back Ground Removal Library not found files: ${KinectToolkit_LIBRARY_DIRS}")
+      endif()
+    endif()
+    
+    if(KinectToolkit_INTERACTION)
+      find_library(KinectToolKit_INTERACTION_LIBRARY
+                    NAMES KinectInteraction180_64 KinectInteraction180_32
+                    PATHS ${KinectToolkit_LIBRARY_DIRS})
+      if(KinectToolKit_INTERACTION_LIBRARY)
+        list(APPEND KinectToolkit_LIBRARIES ${KinectToolKit_INTERACTION_LIBRARY})
+      else()
+        message(WARNING "In directory Interaction Library not found files: ${KinectToolkit_LIBRARY_DIRS}")
       endif()
     endif()
 
