@@ -109,7 +109,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="usesScrollButtons">
        <bool>false</bool>
@@ -414,6 +414,9 @@
            </item>
            <item row="0" column="1">
             <widget class="QPushButton" name="pbPlaySkeleton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>Play</string>
              </property>
@@ -433,12 +436,12 @@
           <item>
            <widget class="QLineEdit" name="leSkeletonIn">
             <property name="text">
-             <string>test_file.kif</string>
+             <string>Skeleton.kif</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pbPlayConfigPath">
+           <widget class="QPushButton" name="pbPlaySkeletonPath">
             <property name="text">
              <string>...</string>
             </property>

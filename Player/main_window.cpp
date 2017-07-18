@@ -13,9 +13,9 @@ main_window::main_window(QObject * parent)
 {
     ui.setupUi(this);
 
-    auto selectFileFn = [=](QLineEdit* le) 
+    auto selectFileFn = [this](QLineEdit* le) 
     {
-        QString str = QFileDialog::getOpenFileName(this, tr("Save File to"), "", ".wmv");
+        QString str = QFileDialog::getOpenFileName(0, tr("Select File"));
         le->setText(str);
     };
 
@@ -51,6 +51,7 @@ main_window::main_window(QObject * parent)
     connect(ui.pbPlaySkeleton, &QPushButton::clicked, this, &main_window::play_skeleton);
     connect(ui.pbLoad, &QPushButton::clicked, this, &main_window::load_skeleton);
     connect(ui.hsFrames, &QSlider::valueChanged, this, &main_window::show_skeleton);
+    connect(ui.pbPlaySkeletonPath, &QPushButton::clicked, [&selectFileFn, this]() {selectFileFn(ui.leSkeletonIn); });
 
 }
 
