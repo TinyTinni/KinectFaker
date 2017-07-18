@@ -16,7 +16,6 @@ if (NOT CATCH_INCLUDE_DIR)
         catch
         PREFIX ${CMAKE_BINARY_DIR}/catch
         GIT_REPOSITORY https://github.com/philsquared/Catch.git
-        TIMEOUT 10
         UPDATE_COMMAND ${GIT_EXECUTABLE} pull
         CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
