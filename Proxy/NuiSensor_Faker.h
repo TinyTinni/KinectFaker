@@ -15,6 +15,7 @@ class INuiSensor_Faker : public INuiSensor
     HANDLE m_nextSkeletonEvent;
 
     public:
+        ~INuiSensor_Faker();
         INuiSensor_Faker(kif::Scene s);
 
 

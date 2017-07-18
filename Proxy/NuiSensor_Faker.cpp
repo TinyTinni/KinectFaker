@@ -37,11 +37,16 @@ HRESULT INuiSensor_Faker::QueryInterface(const IID & riid, void ** ppvObj)
     return E_NOINTERFACE;
 }
 
+INuiSensor_Faker::~INuiSensor_Faker()
+{
+    if (m_nextFrameTimer != INVALID_HANDLE_VALUE) DeleteTimerQueueTimer(0,m_nextFrameTimer,0);
+}
+
 INuiSensor_Faker::INuiSensor_Faker(kif::Scene s):
     m_cRef(1),
     m_scene(std::move(s)),
     m_currentFrameIdx(0),
-    m_nextFrameTimer(),
+    m_nextFrameTimer(INVALID_HANDLE_VALUE),
     m_nextSkeletonEvent()
 {
 }
@@ -56,7 +61,9 @@ HRESULT INuiSensor_Faker::NuiInitialize(DWORD dwFlags)
 
 void INuiSensor_Faker::NuiShutdown(void)
 {
-    DeleteTimerQueueTimer(NULL,m_nextFrameTimer,NULL);
+    CloseHandle(m_nextSkeletonEvent);
+    if (m_nextFrameTimer != INVALID_HANDLE_VALUE) DeleteTimerQueueTimer(0, m_nextFrameTimer, 0);
+    m_nextFrameTimer = INVALID_HANDLE_VALUE;
 }
 
 HRESULT INuiSensor_Faker::NuiSetFrameEndEvent(HANDLE hEvent, DWORD dwFrameEventFlag)
