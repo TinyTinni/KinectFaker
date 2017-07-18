@@ -5,6 +5,7 @@
 
 TEST_CASE("Get Skeleton Positions", "[skeleton]")
 {
+
     int n_devices;
     HRESULT hr = NuiGetSensorCount(&n_devices);
 
@@ -16,5 +17,7 @@ TEST_CASE("Get Skeleton Positions", "[skeleton]")
     REQUIRE(SUCCEEDED(hr));
     REQUIRE(device != nullptr);
     REQUIRE(SUCCEEDED(device->NuiStatus()));
+
+
 
 }

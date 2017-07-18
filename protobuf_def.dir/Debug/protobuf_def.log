@@ -1,0 +1,5 @@
+﻿  Building Custom Rule C:/Users/Matthias/Documents/Git-Sources/KinectFaker/CMakeLists.txt
+  CMake does not need to re-run because C:/Users/Matthias/Documents/Git-Sources/KinectFaker/Build/CMakeFiles/generate.stamp is up-to-date.
+  Running C++ protocol buffer compiler on KinectFileDef.proto
+  KinectFileDef.pb.cc
+  protobuf_def.vcxproj -> C:\Users\Matthias\Documents\Git-Sources\KinectFaker\Build\Debug\protobuf_def.lib
