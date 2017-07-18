@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QWidget" name="widget" native="true">
+     <widget class="QWidget" name="previewWidget" native="true">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QSplitter" name="streamSplitter">
@@ -51,19 +51,6 @@
           <property name="title">
            <string>Color Stream</string>
           </property>
-          <widget class="QLabel" name="lblColorStream">
-           <property name="geometry">
-            <rect>
-             <x>12</x>
-             <y>28</y>
-             <width>70</width>
-             <height>16</height>
-            </rect>
-           </property>
-           <property name="text">
-            <string>Color Image</string>
-           </property>
-          </widget>
          </widget>
          <widget class="QGroupBox" name="boxDepthStream">
           <property name="minimumSize">
@@ -81,19 +68,6 @@
           <property name="title">
            <string>Depth Stream</string>
           </property>
-          <widget class="QLabel" name="lbDepth">
-           <property name="geometry">
-            <rect>
-             <x>12</x>
-             <y>28</y>
-             <width>73</width>
-             <height>16</height>
-            </rect>
-           </property>
-           <property name="text">
-            <string>Depth Image</string>
-           </property>
-          </widget>
          </widget>
          <widget class="QGroupBox" name="boxSkeletonStream">
           <property name="sizePolicy">

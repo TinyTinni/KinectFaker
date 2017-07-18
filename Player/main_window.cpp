@@ -41,6 +41,11 @@ main_window::main_window(QObject * parent)
     ui.boxSkeletonStream->layout()->addWidget(m_skeletonViewer);
     //new SkeletonViewer(ui.boxSkeletonStream);
     //ui.streamSplitter->adjustSize();
+    auto sizes = ui.streamSplitter->sizes();
+    sizes.replace(0, ui.previewWidget->width() / 3);
+    sizes.replace(1, ui.previewWidget->width() / 3);
+    sizes.replace(2, ui.previewWidget->width() / 3);
+    ui.streamSplitter->setSizes(sizes);
 
     ////////////////// Play Tab ////////////////////////////
     connect(ui.pbPlaySkeleton, &QPushButton::clicked, this, &main_window::play_skeleton);
