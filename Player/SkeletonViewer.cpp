@@ -25,7 +25,7 @@ void SkeletonViewer::initializeGL()
     m_skeletonVBO.create();
     m_skeletonVBO.bind();
     m_skeletonVBO.setUsagePattern(QOpenGLBuffer::StreamDraw);
-    m_skeletonVBO.allocate(NUI_SKELETON_POSITION_COUNT * 2*sizeof(float));
+    m_skeletonVBO.allocate(NUI_SKELETON_POSITION_COUNT * 4*sizeof(float));
 
     m_shaderProgram.addShaderFromSourceCode(QOpenGLShader::Vertex,
         R"(
@@ -63,7 +63,7 @@ void SkeletonViewer::paintGL()
     glVertexAttribPointer(vertexLocation, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(vertexLocation);
 
-    glDrawArrays(GL_POINTS, 0 , 20);
+    glDrawArrays(GL_POINTS, 0 , NUI_SKELETON_POSITION_COUNT);
 
     glDisableVertexAttribArray(vertexLocation);
     glBindBuffer(GL_ARRAY_BUFFER, 0);

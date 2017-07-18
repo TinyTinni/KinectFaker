@@ -38,18 +38,19 @@ add_executable( Player WIN32 ${SOURCES} ${UI_SOURCES})
 target_include_directories(Player 
     PUBLIC 
     ${KinectSDK_INCLUDE_DIRS}
-	${Qt5Widgets_INCLUDE_DIRS}
+    ${Qt5Widgets_INCLUDE_DIRS}
     ${CMAKE_BINARY_DIR}
     )
     
     
 target_link_libraries(Player 
-PUBLIC
+    PUBLIC
     ${KinectSDK_LIBRARIES}
     protobuf_def
     Qt5::Widgets
     )
 
-target_compile_definitions(Player PUBLIC
-    -DNOMINMAX
+target_compile_definitions(Player 
+    PUBLIC
+    NOMINMAX
     )

@@ -107,10 +107,11 @@ void main_window::start_record(bool checked)
 
     const auto recordSkeletonFn = [this](const NUI_SKELETON_DATA& skd) 
     {
-
         kif::Frame* frame = m_scene.add_frames();
         kif::SkeletonData* data = frame->add_skeleton_data();
         data->set_etrackingstate(skd.eTrackingState);
+
+        std::vector<float> pos(2 * NUI_SKELETON_POSITION_COUNT);
 
         for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
         {
@@ -121,7 +122,12 @@ void main_window::start_record(bool checked)
             vec->set_w(skd.SkeletonPositions[i].w);
             //std::cout << vec->x() << "\t" << vec->y() << "\t" << vec->z() << std::endl;
             data->add_eskeletonpositiontrackingstate(skd.eSkeletonPositionTrackingState[i]);
+
+            pos[2 * i] = vec->x();
+            pos[2 * i + 1] = vec->y();
         }
+        m_skeletonViewer->setSkeleton(pos.data());
+        m_skeletonViewer->update();
     };
     const auto emptyFn = [](const NUI_SKELETON_DATA& skd) {};
 
@@ -136,14 +142,6 @@ void main_window::start_record(bool checked)
 
     m_kinect->start_record();
     m_skeletonEvent.setEnabled(true);
-/*
-    while (m_scene.frames_size() != 150)
-        while (!m_kinect->get_skeleton_position());
-
-    m_kinect->stop_record();
-
-    std::ofstream file(ui.leSkeletonOut->text().toLatin1(), std::ios::binary);
-    m_scene.SerializePartialToOstream(&file);*/
     return;
 
 }
@@ -177,14 +175,18 @@ void main_window::play_skeleton()
 void main_window::show_skeleton(int index)
 {
     auto frame = m_scene.frames(index);
+    if (frame.skeleton_data_size() == 0)
+        return;
     auto skd = frame.skeleton_data(0);
 
     std::vector<float> pos;
-    pos.reserve(2 * NUI_SKELETON_POSITION_COUNT);
+    pos.reserve(4 * NUI_SKELETON_POSITION_COUNT);
     for (auto v : skd.skeletonpositions())
     {
         pos.push_back(v.x());
         pos.push_back(v.y());
+        //pos.push_back(0.f);
+        //pos.push_back(0.f);
     }
     m_skeletonViewer->setSkeleton(pos.data());
     m_skeletonViewer->update();
