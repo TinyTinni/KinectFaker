@@ -15,9 +15,6 @@ target_link_libraries(protobuf_def PUBLIC protobuf::libprotobuf)
 # Faker library
 add_subdirectory("Proxy")
 
-## Recorder
-add_subdirectory("Recorder")	
-
 ## (optional) Player - plays ksk files
 option (BUILD_PLAYER "Build Player" ON)	
 if(BUILD_PLAYER)
@@ -31,12 +28,9 @@ if (BUILD_TESTS)
 	add_subdirectory("tests")
 endif()
 
-if (BUILD_TEST)
+if (BUILD_Player)
 	set_property( DIRECTORY PROPERTY 
-		VS_STARTUP_PROJECT "tests"
+		VS_STARTUP_PROJECT "Player"
 		)
 else()
-	set_property( DIRECTORY PROPERTY 
-		VS_STARTUP_PROJECT "Recorder"
-		)
 endif()
