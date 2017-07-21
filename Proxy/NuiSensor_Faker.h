@@ -9,8 +9,9 @@ class INuiSensor_Faker : public INuiSensor
     {
     // COM data
     ULONG m_cRef;
-    _bstr_t m_connectionId;
-    int m_connectionIndex;
+    const _bstr_t m_connectionId;
+    const int m_connectionIndex;
+    DWORD m_initFlags;
     
     // skeleton data
     kif::Scene m_scene;

@@ -44,6 +44,7 @@ Run the program.
 |                       |NuiUniqueId **) 
 |                       |NuiStatus 
 |                       |NuiInstanceIndex
+|                       |NuiInitializationFlags
 
 *)_NuiTransformSmooth_ Skeleton positions are saved after smoothing, therefore this function does nothing and has to be set in the animation file. 
 

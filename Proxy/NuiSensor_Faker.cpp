@@ -46,6 +46,7 @@ INuiSensor_Faker::INuiSensor_Faker(kif::Scene s, _bstr_t connectionId, int index
     m_cRef(1),
     m_connectionId(std::move(connectionId)),
     m_connectionIndex(std::move(index)),
+    m_initFlags(0),
     m_scene(std::move(s)),
     m_currentFrameIdx(0),
     m_nextFrameTimer(INVALID_HANDLE_VALUE),
@@ -62,6 +63,7 @@ HRESULT INuiSensor_Faker::NuiInitialize(DWORD dwFlags)
     if (!(dwFlags & NUI_INITIALIZE_FLAG_USES_SKELETON))
         return E_INVALIDARG;
 
+    m_initFlags = dwFlags;
     return S_OK;
 }
 
@@ -70,6 +72,7 @@ void INuiSensor_Faker::NuiShutdown(void)
     CloseHandle(m_nextSkeletonEvent);
     if (m_nextFrameTimer != INVALID_HANDLE_VALUE) DeleteTimerQueueTimer(0, m_nextFrameTimer, 0);
     m_nextFrameTimer = INVALID_HANDLE_VALUE;
+    m_initFlags = 0;
 }
 
 HRESULT INuiSensor_Faker::NuiSetFrameEndEvent(HANDLE hEvent, DWORD dwFrameEventFlag)
@@ -249,7 +252,7 @@ HRESULT INuiSensor_Faker::NuiStatus(void)
 
 DWORD INuiSensor_Faker::NuiInitializationFlags(void)
 {
-    return 0;
+    return m_initFlags;
 }
 
 HRESULT INuiSensor_Faker::NuiGetCoordinateMapper(INuiCoordinateMapper ** pMapping)
