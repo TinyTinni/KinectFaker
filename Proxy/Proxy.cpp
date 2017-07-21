@@ -13,6 +13,8 @@
 
 #include <locale> //convert wchar_t to char in NuiGetSensorById
 #include <codecvt>
+#include <tchar.h>
+#include <comutil.h>
 
 #include <KinectFileDef.pb.h>
 #include "NuiSensor_Faker.h"
@@ -28,7 +30,7 @@ struct FakeDevice
 {
     const std::string name;
     const std::string filename;
-    size_t connectionId;
+    _bstr_t connectionId;
 
     //todo: cache device
 };
@@ -88,14 +90,35 @@ bool create_devices()
         {
             for (auto it = config_it->cbegin(); it != config_it->cend(); ++it)
             {
+
+                const auto err_str = "Could not find {}.";
+
                 const auto& dev = it.value();
                 const auto& dev_name = it.key();
+
+                std::string str = "connection_id";
+
+                const auto connID = dev.find(str);
+                _bstr_t connID_str = "";
+                if (connID == dev.end())
+                    g_log->error(err_str, str);
+                else
+                    connID_str = std::string(connID.value()).c_str();
+
+
+                const auto skeleton_file = dev.find("skeleton_file");
+                if (skeleton_file == dev.end())
+                {
+                    g_log->critical("Could not find skeleton_file in configuration. Can not create Fake Device \"{}\"", dev_name);
+                    continue;
+                }
+
                 g_devices.push_back( //throws out_of_memory
                     std::make_unique<FakeDevice>(
                         FakeDevice{
-                    dev_name,
-                    dev["skeleton_file"], //skeleton file
-                    std::hash<std::string>{}("") //connectionId
+                    skeleton_file.value(),
+                    connID_str, //skeleton file
+                    BSTR("") //connectionId
                 }
                 ));
                 g_log->trace("created new fake device: {}.", dev_name);
@@ -131,8 +154,11 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
     case DLL_PROCESS_ATTACH:
         //  For optimization.
         DisableThreadLibraryCalls(hDllHandle);
+        std::basic_string<TCHAR> systemdir(GetSystemDirectory(nullptr, 0),_T('\0'));
+        if (!GetSystemDirectory(&systemdir[0], systemdir.size()))
+            return;
 
-        kinectHndl = LoadLibraryEx("C:\\Windows\\System32\\Kinect10.dll", NULL, 0);
+        kinectHndl = LoadLibraryEx(systemdir.c_str(), NULL, 0);
 
         // Cannot find original .dll. Return false until the proxy-dll was tested without installed Kinect.
         // Anyway, it is not a good idea to not install at least the Kinect Redist
@@ -390,12 +416,10 @@ HRESULT NUIAPI NuiCreateSensorById(
     std::string instId = conv1.to_bytes(strInstanceId);
     g_callLog->trace("{} (strInstanceId={})", "NuiCreateSensorById", instId);
     // search for sensor with the given id
-    const size_t instIdHash = std::hash<std::string>{} ( instId );
-    const size_t empty = std::hash<std::string>{}("");
-
-    /*for (const auto& d : g_devices)
+    _bstr_t instance_id = strInstanceId;
+    for (const auto& d : g_devices)
     {
-        if (d->connectionId == empty)
+        if (wcscmp(d->connectionId,instance_id) == 0) //maybe use hashing
         {
             kif::Scene scene; 
             std::ifstream scene_file(d->filename, std::ios::binary);
@@ -404,11 +428,12 @@ HRESULT NUIAPI NuiCreateSensorById(
             if (!scene.ParseFromIstream(&scene_file))
                 continue;
 
-            if (!scene.has_connectionid())
-                continue;
+            auto frames = scene.frames_size();
+            *ppNuiSensor = new INuiSensor_Faker(std::move(scene));
+            return S_OK;
         }
-    }*/
-
+    }
+    //else if nothing was found
 
     typedef HRESULT(*func)(const OLECHAR*, INuiSensor**);
     static FARPROC f = GetProcAddress(kinectHndl, "NuiCreateSensorById");
