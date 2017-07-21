@@ -16,9 +16,9 @@ target_link_libraries(protobuf_def PUBLIC protobuf::libprotobuf)
 add_subdirectory("Proxy")
 
 ## (optional) Player - plays ksk files
-option (BUILD_PLAYER "Build Player" ON)	
+option (BUILD_PLAYER "Build GUI" ON)	
 if(BUILD_PLAYER)
-	add_subdirectory("Player")
+	add_subdirectory("GUI")
 endif(BUILD_PLAYER)
 
 option (BUILD_TESTS "Build Tests" ON)
@@ -30,7 +30,7 @@ endif()
 
 if (BUILD_Player)
 	set_property( DIRECTORY PROPERTY 
-		VS_STARTUP_PROJECT "Player"
+		VS_STARTUP_PROJECT "GUI"
 		)
 else()
 endif()

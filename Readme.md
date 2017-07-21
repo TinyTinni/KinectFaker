@@ -16,6 +16,7 @@ Emulated Features:
 ## Requirements
 - [Kinect SDK v1.8](https://www.microsoft.com/en-us/download/details.aspx?id=40278)
 - [Google's Protobuf](https://github.com/google/protobuf)
+- Qt5 for the GUI (Record & Play Skeleton Data)
 
 ## Using DLL-Proxy
 - Record your skeleton using the prototyped recorder (not recommended) or the GUI (recommended).

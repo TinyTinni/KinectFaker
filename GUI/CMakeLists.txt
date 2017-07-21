@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.1 )
-project( KinectPlayer )
+project( KinectProxyGUI )
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -17,7 +17,7 @@ QT5_WRAP_UI(UI_SOURCES
     )
 
 
-## (optional) Player - plays ksk files
+## (optional) GUI
 set (SOURCES
     "main.cpp"
     "main_window.h"
@@ -33,9 +33,9 @@ set (SOURCES
     "Kinect.h"
     "Kinect.cpp"
     )
-add_executable( Player WIN32 ${SOURCES} ${UI_SOURCES})
+add_executable( GUI WIN32 ${SOURCES} ${UI_SOURCES})
 
-target_include_directories(Player 
+target_include_directories(GUI 
     PUBLIC 
     ${KinectSDK_INCLUDE_DIRS}
     ${Qt5Widgets_INCLUDE_DIRS}
@@ -43,14 +43,14 @@ target_include_directories(Player
     )
     
     
-target_link_libraries(Player 
+target_link_libraries(GUI 
     PUBLIC
     ${KinectSDK_LIBRARIES}
     protobuf_def
     Qt5::Widgets
     )
 
-target_compile_definitions(Player 
+target_compile_definitions(GUI 
     PUBLIC
     NOMINMAX
     )

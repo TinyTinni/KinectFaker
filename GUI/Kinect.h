@@ -25,6 +25,8 @@ public:
 
     bool event_next_frame_fired();
 
+    INuiSensor* get_raw_device() { return m_device; }
+
     RecorderKinect();
     RecorderKinect(HANDLE skeletonEventHandle);
     /// get skeleton joint positions in range of [0,1]

@@ -81,7 +81,7 @@ void main_window::generate_config()
 
     QJsonObject currentDevice;// support multiple kinect devices
     devices["device1"] = currentDevice;
-    currentDevice["ConnectionId"] = ui.leConnectionId->text();
+    currentDevice["connection_id"] = ui.leConnectionId->text();
 
     //todo handle empty stuff
     currentDevice["skeleton_file"] = ui.leSkeletonOut->text();
@@ -103,12 +103,19 @@ void main_window::start_record(bool checked)
     }
 
     //checked == true
+    //////////////////////////////////////
+
+    //init kinect, if neccessary
     if (!m_kinect)
     {
         m_skeletonEvent.setHandle(CreateEventW(NULL, TRUE, FALSE, NULL));
         m_skeletonEvent.setEnabled(true);
         m_kinect = std::make_unique<RecorderKinect>(m_skeletonEvent.handle());
         connect(&m_skeletonEvent, &QWinEventNotifier::activated, [this]() {m_kinect->event_next_frame_fired(); });
+
+        BSTR connectionid = m_kinect->get_raw_device()->NuiDeviceConnectionId();
+        ui.leConnectionId->setText(QString::fromWCharArray(connectionid));
+        ui.pbGenerateConfig->setEnabled(true);
     }
 
     const auto recordSkeletonFn = [this](const NUI_SKELETON_DATA& skd) 
