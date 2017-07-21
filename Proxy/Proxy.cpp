@@ -103,7 +103,7 @@ bool create_devices()
                 if (connID == dev.end())
                     g_log->error(err_str, str);
                 else
-                    connID_str = std::string(connID.value()).c_str();
+                    connID_str = connID.value().get<std::string>().c_str();
 
 
                 const auto skeleton_file = dev.find("skeleton_file");
@@ -116,7 +116,7 @@ bool create_devices()
                 g_devices.push_back( //throws out_of_memory
                     std::make_unique<FakeDevice>(
                         FakeDevice{
-                    skeleton_file.value(),
+                    skeleton_file.value().get<std::string>(),
                     connID_str, //skeleton file
                     BSTR("") //connectionId
                 }
@@ -152,11 +152,12 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
     switch (nReason)
     {
     case DLL_PROCESS_ATTACH:
+    {
         //  For optimization.
         DisableThreadLibraryCalls(hDllHandle);
-        std::basic_string<TCHAR> systemdir(GetSystemDirectory(nullptr, 0),_T('\0'));
-        if (!GetSystemDirectory(&systemdir[0], systemdir.size()))
-            return;
+        std::basic_string<TCHAR> systemdir(GetSystemDirectory(nullptr, 0), _T('\0'));
+        if (!GetSystemDirectory(&systemdir[0], (UINT)systemdir.size()))
+            return false;
 
         kinectHndl = LoadLibraryEx(systemdir.c_str(), NULL, 0);
 
@@ -182,7 +183,7 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
         // library should be able redirect to the original Kinect10.dll even without Fake Devices
         if (!create_devices())
             return true;
-
+    }
         break;
     case DLL_PROCESS_DETACH:
         //cleanup

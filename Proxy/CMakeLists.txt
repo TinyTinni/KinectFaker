@@ -79,8 +79,10 @@ PRIVATE
     )
 target_link_libraries(Kinect10
 PUBLIC
-    protobuf_def    
+    protobuf_def   
+    debug comsuppwd.lib optimized comsuppw.lib 
     )
+    
 target_compile_definitions(Kinect10
     PUBLIC
     -DNOMINMAX
