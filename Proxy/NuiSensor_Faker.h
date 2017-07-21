@@ -10,6 +10,7 @@ class INuiSensor_Faker : public INuiSensor
     // COM data
     ULONG m_cRef;
     _bstr_t m_connectionId;
+    int m_connectionIndex;
     
     // skeleton data
     kif::Scene m_scene;
@@ -22,7 +23,7 @@ class INuiSensor_Faker : public INuiSensor
 
     public:
         ~INuiSensor_Faker();
-        INuiSensor_Faker(kif::Scene s, _bstr_t connectionId);
+        INuiSensor_Faker(kif::Scene s, _bstr_t connectionId, int index);
 
 
         // INuiSensor overloaded functions

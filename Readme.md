@@ -18,6 +18,10 @@ Emulated Features:
 - [Google's Protobuf](https://github.com/google/protobuf)
 - Qt5 for the GUI (Record & Play Skeleton Data)
 
+auto download
+- spdlog
+- catch for tests
+
 ## Using DLL-Proxy
 - Record your skeleton using the prototyped recorder (not recommended) or the GUI (recommended).
 - Configure your emulated scene in _fake_kinect.config_, example can be found in [tests](.tests/fake_kinect.config).
@@ -32,14 +36,14 @@ Run the program.
 |---------------------- |-------------------|
 |NuiGetSensorCount      |NuiInitialize
 |NuiCreateSensorByIndex |NuiShutdown
-|                       |NuiSkeletonTrackingEnable 
+|NuiCreateSensorById    |NuiSkeletonTrackingEnable 
 |                       |NuiSkeletonTrackingDisable
 |                       |NuiSkeletonGetNextFrame 
 |                       |NuiTransformSmooth *) 
 |                       |NuiDeviceConnectionId 
 |                       |NuiUniqueId **) 
 |                       |NuiStatus 
-|                       |
+|                       |NuiInstanceIndex
 
 *)_NuiTransformSmooth_ Skeleton positions are saved after smoothing, therefore this function does nothing and has to be set in the animation file. 
 

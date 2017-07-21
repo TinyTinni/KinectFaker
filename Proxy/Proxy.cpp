@@ -33,7 +33,7 @@ struct FakeDevice
     const std::string filename;
     _bstr_t connectionId;
 
-    //todo: cache device
+    //todo: cache device?
 };
 
 
@@ -163,7 +163,7 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
         //  For optimization.
         DisableThreadLibraryCalls(hDllHandle);
         std::basic_string<TCHAR> systemdir(GetSystemDirectory(nullptr, 0)-1, _T('\0'));
-        if (!GetSystemDirectory(&systemdir[0], (UINT)systemdir.size()+1))
+        if (!GetSystemDirectory(&systemdir[0], static_cast<UINT>(systemdir.size())+1u))
             return false;
 
         const auto kdll_path = systemdir + _T("\\Kinect10.dll");
@@ -253,7 +253,7 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
         return E_OUTOFMEMORY;
 
     auto frames = scene.frames_size();
-    *ppNuiSensor = new INuiSensor_Faker(std::move(scene), g_devices[index]->connectionId);
+    *ppNuiSensor = new INuiSensor_Faker(std::move(scene), g_devices[index]->connectionId, index+pCount);
     return S_OK;
 }
 HRESULT NUIAPI NuiCameraElevationGetAngle(
@@ -427,8 +427,12 @@ HRESULT NUIAPI NuiCreateSensorById(
     g_callLog->trace("{} (strInstanceId={})", "NuiCreateSensorById", instId);
     // search for sensor with the given id
     _bstr_t instance_id = strInstanceId;
-    for (const auto& d : g_devices)
+    for (int i = 0; i < g_devices.size(); ++i)
     {
+        const auto d = g_devices[i].get();
+        int num_devices;
+        NuiGetSensorCount(&num_devices);
+        num_devices -= static_cast<int>(g_devices.size());
         if (wcscmp(d->connectionId,instance_id) == 0) //maybe use hashing
         {
             kif::Scene scene; 
@@ -439,7 +443,8 @@ HRESULT NUIAPI NuiCreateSensorById(
                 continue;
 
             auto frames = scene.frames_size();
-            *ppNuiSensor = new INuiSensor_Faker(std::move(scene), d->connectionId);
+
+            *ppNuiSensor = new INuiSensor_Faker(std::move(scene), d->connectionId, num_devices+i);
             return S_OK;
         }
     }

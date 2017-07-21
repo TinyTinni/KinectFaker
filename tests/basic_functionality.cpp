@@ -12,12 +12,13 @@ TEST_CASE("init ", "[init]")
     REQUIRE(SUCCEEDED(hr));
     REQUIRE(n_devices > 0);
 
-    const auto test_basic_props_fn = [](INuiSensor* device, HRESULT hr)
+    const auto test_basic_props_fn = [&n_devices](INuiSensor* device, HRESULT hr)
     {
         REQUIRE(SUCCEEDED(hr));
         REQUIRE(device != nullptr);
         REQUIRE(SUCCEEDED(device->NuiStatus()));
         REQUIRE(0 == wcscmp(device->NuiDeviceConnectionId(), L"testingConnection"));
+        REQUIRE(device->NuiInstanceIndex() == n_devices - 1);
     };
 
     SECTION("create by index")
