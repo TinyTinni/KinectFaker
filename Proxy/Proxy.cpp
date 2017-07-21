@@ -12,9 +12,10 @@
 #include <functional> //connection id
 
 #include <locale> //convert wchar_t to char in NuiGetSensorById
-#include <codecvt>
-#include <tchar.h>
-#include <comutil.h>
+#include <codecvt> //^^
+
+#include <tchar.h> //_T
+#include <comutil.h> //convert from BSTR to _bstr_t
 
 #include <KinectFileDef.pb.h>
 #include "NuiSensor_Faker.h"
@@ -43,6 +44,12 @@ HMODULE kinectHndl = NULL;
 std::shared_ptr<spdlog::logger> g_log = nullptr;
 std::shared_ptr<spdlog::logger> g_callLog = nullptr;
 
+bool file_exists(const char* name)
+{
+    const auto fileAttrib = GetFileAttributes(name);
+    return (fileAttrib == INVALID_FILE_ATTRIBUTES || (fileAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
 bool create_devices()
 {
     const char* strFile = "fake_kinect.config"; 
@@ -55,7 +62,7 @@ bool create_devices()
     js::json config;
     try
     {
-        g_log->trace("Read JSON {}", strFile);
+        g_log->trace("Read configuration file {}", strFile);
         config << file; // throws std::exceptions on parse error
 
         const auto config_end = config.end();
@@ -90,35 +97,35 @@ bool create_devices()
         {
             for (auto it = config_it->cbegin(); it != config_it->cend(); ++it)
             {
-
-                const auto err_str = "Could not find {}.";
-
                 const auto& dev = it.value();
                 const auto& dev_name = it.key();
 
-                std::string str = "connection_id";
-
-                const auto connID = dev.find(str);
-                _bstr_t connID_str = "";
-                if (connID == dev.end())
-                    g_log->error(err_str, str);
+                // connection_id
+                const auto connID_it = dev.find("connection_id");
+                _bstr_t connID = "";
+                if (connID_it == dev.end())
+                    g_log->warn("Could not find \"connection_id\" in configuartion");
                 else
-                    connID_str = connID.value().get<std::string>().c_str();
+                    connID = connID_it.value().get<std::string>().c_str();
 
-
-                const auto skeleton_file = dev.find("skeleton_file");
-                if (skeleton_file == dev.end())
+                // skeleton_file
+                const auto skeleton_file_it = dev.find("skeleton_file");
+                if (skeleton_file_it == dev.end())
                 {
                     g_log->critical("Could not find skeleton_file in configuration. Can not create Fake Device \"{}\"", dev_name);
                     continue;
                 }
+                const auto skeleton_file = skeleton_file_it.value().get<std::string>();
+                if (file_exists(skeleton_file.c_str()))
+                    g_log->warn("File given by \"skeleton_file\" does not exist.\n skeleton_file : {}", skeleton_file);
 
+                // device creation
                 g_devices.push_back( //throws out_of_memory
                     std::make_unique<FakeDevice>(
                         FakeDevice{
-                    skeleton_file.value().get<std::string>(),
-                    connID_str, //skeleton file
-                    BSTR("") //connectionId
+                    dev_name,
+                    skeleton_file, //skeleton file
+                    connID //connectionId
                 }
                 ));
                 g_log->trace("created new fake device: {}.", dev_name);
@@ -155,11 +162,13 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
     {
         //  For optimization.
         DisableThreadLibraryCalls(hDllHandle);
-        std::basic_string<TCHAR> systemdir(GetSystemDirectory(nullptr, 0), _T('\0'));
-        if (!GetSystemDirectory(&systemdir[0], (UINT)systemdir.size()))
+        std::basic_string<TCHAR> systemdir(GetSystemDirectory(nullptr, 0)-1, _T('\0'));
+        if (!GetSystemDirectory(&systemdir[0], (UINT)systemdir.size()+1))
             return false;
 
-        kinectHndl = LoadLibraryEx(systemdir.c_str(), NULL, 0);
+        const auto kdll_path = systemdir + _T("\\Kinect10.dll");
+
+        kinectHndl = LoadLibraryEx(kdll_path.c_str(), NULL, 0);
 
         // Cannot find original .dll. Return false until the proxy-dll was tested without installed Kinect.
         // Anyway, it is not a good idea to not install at least the Kinect Redist
