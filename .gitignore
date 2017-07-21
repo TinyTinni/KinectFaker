@@ -1,0 +1,6 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/protobuf_def.dir/Debug/protobuf_def.log
+/x64/Debug/ZERO_CHECK
