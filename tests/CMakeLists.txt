@@ -32,7 +32,7 @@ endif()
 
 set (SOURCES
     "main.cpp"
-    "SkeletonPosition.cpp"
+    "basic_functionality.cpp"
     "fake_kinect.config"
     )
 

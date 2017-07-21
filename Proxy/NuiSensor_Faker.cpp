@@ -42,13 +42,17 @@ INuiSensor_Faker::~INuiSensor_Faker()
     if (m_nextFrameTimer != INVALID_HANDLE_VALUE) DeleteTimerQueueTimer(0,m_nextFrameTimer,0);
 }
 
-INuiSensor_Faker::INuiSensor_Faker(kif::Scene s):
+INuiSensor_Faker::INuiSensor_Faker(kif::Scene s, _bstr_t connectionId):
     m_cRef(1),
+    m_connectionId(std::move(connectionId)),
     m_scene(std::move(s)),
     m_currentFrameIdx(0),
     m_nextFrameTimer(INVALID_HANDLE_VALUE),
     m_nextSkeletonEvent()
 {
+    //INVALID
+    // s
+    // connectionId
 }
 
 HRESULT INuiSensor_Faker::NuiInitialize(DWORD dwFlags)
@@ -222,7 +226,7 @@ int INuiSensor_Faker::NuiInstanceIndex(void)
 
 BSTR INuiSensor_Faker::NuiDeviceConnectionId(void)
 {
-    return BSTR();
+    return m_connectionId;
 }
 
 BSTR INuiSensor_Faker::NuiUniqueId(void)

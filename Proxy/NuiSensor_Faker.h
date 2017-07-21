@@ -3,12 +3,18 @@
 #include <Windows.h>
 #include <NuiApi.h>
 #include <KinectFileDef.pb.h>
+#include <comutil.h> // _bstr_t
 
 class INuiSensor_Faker : public INuiSensor
     {
+    // COM data
     ULONG m_cRef;
+    _bstr_t m_connectionId;
+    
+    // skeleton data
     kif::Scene m_scene;
     int m_currentFrameIdx;
+
 
     HANDLE m_nextFrameTimer;
     // event handles
@@ -16,7 +22,7 @@ class INuiSensor_Faker : public INuiSensor
 
     public:
         ~INuiSensor_Faker();
-        INuiSensor_Faker(kif::Scene s);
+        INuiSensor_Faker(kif::Scene s, _bstr_t connectionId);
 
 
         // INuiSensor overloaded functions

@@ -253,7 +253,7 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
         return E_OUTOFMEMORY;
 
     auto frames = scene.frames_size();
-    *ppNuiSensor = new INuiSensor_Faker(std::move(scene));
+    *ppNuiSensor = new INuiSensor_Faker(std::move(scene), g_devices[index]->connectionId);
     return S_OK;
 }
 HRESULT NUIAPI NuiCameraElevationGetAngle(
@@ -439,7 +439,7 @@ HRESULT NUIAPI NuiCreateSensorById(
                 continue;
 
             auto frames = scene.frames_size();
-            *ppNuiSensor = new INuiSensor_Faker(std::move(scene));
+            *ppNuiSensor = new INuiSensor_Faker(std::move(scene), d->connectionId);
             return S_OK;
         }
     }
