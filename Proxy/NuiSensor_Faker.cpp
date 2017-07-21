@@ -152,7 +152,8 @@ HRESULT INuiSensor_Faker::NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWOR
 
 HRESULT INuiSensor_Faker::NuiSkeletonTrackingDisable(void)
 {
-    return E_NOTIMPL;
+    DeleteTimerQueueTimer(0, m_nextFrameTimer, 0);
+    return S_OK;
 }
 
 HRESULT INuiSensor_Faker::NuiSkeletonSetTrackedSkeletons(DWORD * TrackingIDs)
@@ -231,7 +232,7 @@ BSTR INuiSensor_Faker::NuiDeviceConnectionId(void)
 
 BSTR INuiSensor_Faker::NuiUniqueId(void)
 {
-    return BSTR();
+    return NuiDeviceConnectionId();
 }
 
 BSTR INuiSensor_Faker::NuiAudioArrayId(void)

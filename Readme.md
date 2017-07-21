@@ -27,7 +27,25 @@ skeleton animation.
 
 Run the program.
 
- 
+## Implemented Functions
+| Free Functions        | INuiSensor        |
+|---------------------- |-------------------|
+|NuiGetSensorCount      |NuiInitialize
+|NuiCreateSensorByIndex |NuiShutdown
+|                       |NuiSkeletonTrackingEnable 
+|                       |NuiSkeletonTrackingDisable
+|                       |NuiSkeletonGetNextFrame 
+|                       |NuiTransformSmooth *) 
+|                       |NuiDeviceConnectionId 
+|                       |NuiUniqueId **) 
+|                       |NuiStatus 
+|                       |
+
+*)_NuiTransformSmooth_ Skeleton positions are saved after smoothing, therefore this function does nothing and has to be set in the animation file. 
+
+**) _NuiUniqueId_ [Recommended by MSDN: Don't use!](https://msdn.microsoft.com/en-us/library/hh973101.aspx)
+
+Not all members of a _NUI_SKELETON_FRAME_ instance are filled yet.
 
 ## LICENSE
 [GPLv3](./License)© Matthias Möller. Made with ♥ in Germany.
