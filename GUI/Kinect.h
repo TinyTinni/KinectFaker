@@ -15,8 +15,7 @@ class RecorderKinect
     HANDLE m_hNextSkeletonEvent;
     bool m_isOn;
 
-    std::function<void()> m_newFrameCb;
-    std::function<void(const NUI_SKELETON_DATA& skd)> m_newPointCb;
+    std::function<void(const NUI_SKELETON_FRAME& skd)> m_newPointCb;
 
 public:
 
@@ -35,11 +34,7 @@ public:
         m_device->NuiSkeletonTrackingDisable();
     }
 
-    inline void set_new_frame_callback(std::function<void()> c)
-    {
-        m_newFrameCb = std::move(c);
-    }
-    inline void set_new_point_callback(std::function<void(const NUI_SKELETON_DATA& skd)> c)
+    inline void set_new_point_callback(std::function<void(const NUI_SKELETON_FRAME& skd)> c)
     {
         m_newPointCb = std::move(c);
     }

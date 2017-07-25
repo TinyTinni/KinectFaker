@@ -2,13 +2,14 @@ syntax = "proto2";
 
 package kif;
 
+message Vector {
+    optional float x = 1;
+    optional float y = 2;
+    optional float z = 3;
+    optional float w = 4;
+}
+
 message SkeletonData {
-    message Vector {
-        optional float x = 1;
-        optional float y = 2;
-        optional float z = 3;
-        optional float w = 4;
-    }
     required int32 eTrackingState = 1; //if skeleton is not tracked, no field can be set
     optional int32 dwTrackingID = 2;
     optional int32 dwEnrollmentIndex = 3;
@@ -21,6 +22,11 @@ message SkeletonData {
 
 message Frame{
     repeated SkeletonData skeleton_data = 1; // 6 skeletons (NUI_SKELETON_COUNT)
+    optional int64 liTimeStamp = 2;
+    optional int32 dwFrameNumber = 3;
+    optional int32 dwFlags = 4;
+    optional Vector vFloorClipPlane = 5;
+    optional Vector vNormalToGravity = 6;
 }
 
 message Scene{

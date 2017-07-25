@@ -20,19 +20,7 @@ bool RecorderKinect::event_next_frame_fired()
 
     m_device->NuiTransformSmooth(&skeletonFrame, NULL);
 
-    for (int j = 0; j < NUI_SKELETON_COUNT; ++j)
-    {
-        const NUI_SKELETON_TRACKING_STATE trackingState = skeletonFrame.SkeletonData[j].eTrackingState;
-
-        if (NUI_SKELETON_TRACKED == trackingState)
-        {
-            m_newFrameCb();
-            auto& skd = skeletonFrame.SkeletonData[j];
-            m_newPointCb(skd);
-            return true;
-        }
-        else if (j + 1 == NUI_SKELETON_COUNT) return false;
-    }
+    m_newPointCb(skeletonFrame);
 
     return true;
 }

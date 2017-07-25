@@ -118,17 +118,15 @@ void main_window::start_record(bool checked)
         ui.pbGenerateConfig->setEnabled(true);
     }
 
-    const auto recordSkeletonFn = [this](const NUI_SKELETON_DATA& skd) 
+    const auto recordSkeletonFn = [this](const NUI_SKELETON_DATA& skd, kif::SkeletonData* data) 
     {
-        kif::Frame* frame = m_scene.add_frames();
-        kif::SkeletonData* data = frame->add_skeleton_data();
         data->set_etrackingstate(skd.eTrackingState);
         data->set_dwtrackingid(skd.dwTrackingID);
         data->set_dwenrollmentindex(skd.dwEnrollmentIndex);
         data->set_dwuserindex(skd.dwUserIndex);
         data->set_dwqualityflags(skd.dwQualityFlags);
 
-        auto u_skel_pos = std::make_unique<kif::SkeletonData::Vector>();
+        auto u_skel_pos = std::make_unique<kif::Vector>();
         u_skel_pos->set_x(skd.Position.x);
         u_skel_pos->set_y(skd.Position.y);
         u_skel_pos->set_z(skd.Position.z);
@@ -154,12 +152,34 @@ void main_window::start_record(bool checked)
         m_skeletonViewer->setSkeleton(pos.data());
         m_skeletonViewer->update();
     };
-    const auto emptyFn = [](const NUI_SKELETON_DATA& skd) {};
 
-    std::function<void(const NUI_SKELETON_DATA&)> newFrameCB = recordSkeletonFn;
+    const auto recordFrameFN = [this,&recordSkeletonFn](const NUI_SKELETON_FRAME& frame)
+    {
+        const auto VecVecCast = [](const Vector4& v)-> kif::Vector*
+        {
+            auto r = std::make_unique<kif::Vector>();
+            r->set_x(v.x);
+            r->set_y(v.y);
+            r->set_z(v.z);
+            r->set_w(v.w);
+            return r.release();
+        };
+
+        kif::Frame* kif_frame = m_scene.add_frames();
+        kif_frame->set_litimestamp(frame.liTimeStamp.QuadPart);
+        kif_frame->set_dwframenumber(frame.dwFrameNumber);
+        kif_frame->set_allocated_vfloorclipplane(VecVecCast(frame.vFloorClipPlane));
+        kif_frame->set_allocated_vnormaltogravity(VecVecCast(frame.vNormalToGravity));
+
+        for (int i = 0; i < NUI_SKELETON_COUNT; ++i)
+            recordSkeletonFn(frame.SkeletonData[i], kif_frame->add_skeleton_data());
+    };
+
+    const auto emptyFn = [](const NUI_SKELETON_FRAME&) {};
+
+    std::function<void(const NUI_SKELETON_FRAME&)> newFrameCB = recordFrameFN;
     if (!ui.cbCaptureSkeleton->isChecked()) newFrameCB = emptyFn; //trinary operator not possible
 
-    m_kinect->set_new_frame_callback([]() {});
     m_kinect->set_new_point_callback(newFrameCB);
 
     while (!m_kinect->isOn())
