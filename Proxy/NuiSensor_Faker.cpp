@@ -171,13 +171,7 @@ HRESULT INuiSensor_Faker::NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NU
     if (!pSkeletonFrame)
         return E_POINTER;
 
-    const auto& frame = m_scene.frames(m_currentFrameIdx);
-    pSkeletonFrame->liTimeStamp;
-    pSkeletonFrame->dwFrameNumber = m_currentFrameIdx;
-    pSkeletonFrame->vFloorClipPlane = Vector4();
-    pSkeletonFrame->vNormalToGravity = Vector4();
-
-    const auto VecVecCast = [](const kif::SkeletonData_Vector& vec) -> Vector4 
+    const auto VecVecCast = [](const kif::Vector& vec) -> Vector4
     {
         Vector4 rv;
         rv.x = vec.x();
@@ -187,6 +181,14 @@ HRESULT INuiSensor_Faker::NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NU
         return rv;
     };
 
+    // NUI_SKELETON_FRAME
+    const auto& frame = m_scene.frames(m_currentFrameIdx);
+    pSkeletonFrame->liTimeStamp.QuadPart = frame.litimestamp();
+    pSkeletonFrame->dwFrameNumber = m_currentFrameIdx;
+    pSkeletonFrame->vFloorClipPlane = VecVecCast(frame.vfloorclipplane());
+    pSkeletonFrame->vNormalToGravity = VecVecCast(frame.vnormaltogravity());
+
+    // NUI_SKELETON_DATA
     for (int i = 0; i < frame.skeleton_data_size(); ++i)
     {
         NUI_SKELETON_DATA* cur = pSkeletonFrame->SkeletonData;
