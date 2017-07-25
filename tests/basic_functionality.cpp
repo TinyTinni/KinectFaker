@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <NuiApi.h>
 
-TEST_CASE("init ", "[init]")
+TEST_CASE("init multiple", "[init]")
 {
 
     int n_devices;

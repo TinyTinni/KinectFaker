@@ -38,7 +38,8 @@ struct FakeDevice
 
 
 std::vector<std::unique_ptr<FakeDevice>> g_devices = {};
-HMODULE kinectHndl = NULL;
+HMODULE kinectHndl = NULL; // handle to original Kinect10.dll module
+INuiSensor_Faker* g_singleDevice = NULL; // device which is used in single device mode (without creating a INuiSensor)
 
 // loggers
 std::shared_ptr<spdlog::logger> g_log = nullptr;
@@ -160,8 +161,10 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
     {
     case DLL_PROCESS_ATTACH:
     {
-        //  For optimization.
+        // For optimization.
         DisableThreadLibraryCalls(hDllHandle);
+
+        // get original functions
         std::basic_string<TCHAR> systemdir(GetSystemDirectory(nullptr, 0)-1, _T('\0'));
         if (!GetSystemDirectory(&systemdir[0], static_cast<UINT>(systemdir.size())+1u))
             return false;
@@ -352,9 +355,19 @@ HRESULT NUIAPI NuiInitialize(
 )
 {
     g_callLog->trace("{} (dwFlags={})", "NuiInitialize", dwFlags);
-    typedef HRESULT(*func)(DWORD);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiInitialize");
-    return reinterpret_cast<func>(f)(dwFlags);
+
+    if (g_singleDevice != nullptr)
+    {
+        g_log->warn("Single Fake Kinect already initialized.");
+        return E_FAIL;
+    }
+    int sensors;
+    NuiGetSensorCount(&sensors);
+    return NuiCreateSensorByIndex(sensors, reinterpret_cast<INuiSensor**>(&g_singleDevice)); //create from first in kinect list
+
+    //typedef HRESULT(*func)(DWORD);
+    //static FARPROC f = GetProcAddress(kinectHndl, "NuiInitialize");
+    //return reinterpret_cast<func>(f)(dwFlags);
 }
 
 HRESULT NUIAPI NuiSetFrameEndEvent(
@@ -371,9 +384,16 @@ HRESULT NUIAPI NuiSetFrameEndEvent(
 void NUIAPI NuiShutdown()
 {
     g_callLog->trace("{} called", "NuiShutdown");
-    typedef void(*func)();
+
+    if (g_singleDevice)
+    {
+        g_singleDevice->Release();
+        g_singleDevice = nullptr;
+    }
+
+    /*typedef void(*func)();
     static FARPROC f = GetProcAddress(kinectHndl, "NuiShutdown");
-    reinterpret_cast<func>(f)();
+    reinterpret_cast<func>(f)();*/
 }
 
 HRESULT NUIAPI NuiSkeletonGetNextFrame(
@@ -382,17 +402,37 @@ HRESULT NUIAPI NuiSkeletonGetNextFrame(
 )
 {
     g_callLog->trace("{} (...)", "NuiSkeletonGetNextFrame");
+
+    if (!g_singleDevice)
+    {
+        g_log->trace("Cannot call {}. Device not initialized.", "NuiSkeletonGetNextFrame");
+        return E_FAIL;
+    }
+
+    return g_singleDevice->NuiSkeletonGetNextFrame(dwMillisecondsToWait,pSkeletonFrame);
+
+/*
     typedef HRESULT(*func)(DWORD, NUI_SKELETON_FRAME*);
     static FARPROC f = GetProcAddress(kinectHndl, "NuiSkeletonGetNextFrame");
-    return reinterpret_cast<func>(f)(dwMillisecondsToWait, pSkeletonFrame);
+    return reinterpret_cast<func>(f)(dwMillisecondsToWait, pSkeletonFrame);*/
 }
 
 HRESULT NUIAPI NuiSkeletonTrackingDisable()
 {
     g_callLog->trace("{} ()", "NuiSkeletonTrackingDisable");
+
+    if (!g_singleDevice)
+    {
+        g_log->trace("Cannot call {}. Device not initialized.", "NuiSkeletonTrackingDisable");
+        return E_FAIL;
+    }
+
+    return g_singleDevice->NuiSkeletonTrackingDisable();
+
+/*
     typedef HRESULT(*func)();
     static FARPROC f = GetProcAddress(kinectHndl, "NuiSkeletonTrackingDisable");
-    return reinterpret_cast<func>(f)();
+    return reinterpret_cast<func>(f)();*/
 }
 
 HRESULT NUIAPI NuiSkeletonTrackingEnable(
@@ -401,9 +441,17 @@ HRESULT NUIAPI NuiSkeletonTrackingEnable(
 )
 {
     g_callLog->trace("{} (dwFlags={})", "NuiSkeletonTrackingEnable", dwFlags);
-    typedef HRESULT(*func)(HANDLE, DWORD);
+    if (!g_singleDevice)
+    {
+        g_log->trace("Cannot call {}. Device not initialized.","NuiSkeletonTrackingEnable");
+        return E_FAIL;
+    }
+
+    return g_singleDevice->NuiSkeletonTrackingEnable(hNextFrameEvent, dwFlags);
+
+    /*typedef HRESULT(*func)(HANDLE, DWORD);
     static FARPROC f = GetProcAddress(kinectHndl, "NuiSkeletonTrackingEnable");
-    return reinterpret_cast<func>(f)(hNextFrameEvent, dwFlags);
+    return reinterpret_cast<func>(f)(hNextFrameEvent, dwFlags);*/
 }
 
 HRESULT NUIAPI NuiTransformSmooth(
@@ -412,9 +460,18 @@ HRESULT NUIAPI NuiTransformSmooth(
 )
 {
     g_callLog->trace("{} (...)", "NuiTransformSmooth");
+    if (!g_singleDevice)
+    {
+        g_log->trace("Cannot call {}. Device not initialized.", "NuiTransformSmooth");
+        return E_FAIL;
+    }
+
+    return g_singleDevice->NuiTransformSmooth(pSkeletonFrame, pSmoothingParams);
+
+    /*
     typedef HRESULT(*func)(NUI_SKELETON_FRAME*, const NUI_TRANSFORM_SMOOTH_PARAMETERS*);
     static FARPROC f = GetProcAddress(kinectHndl, "NuiTransformSmooth");
-    return reinterpret_cast<func>(f)(pSkeletonFrame, pSmoothingParams);
+    return reinterpret_cast<func>(f)(pSkeletonFrame, pSmoothingParams);*/
 }
 
 HRESULT NUIAPI NuiCreateSensorById(
