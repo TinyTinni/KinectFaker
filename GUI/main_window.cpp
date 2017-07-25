@@ -123,8 +123,20 @@ void main_window::start_record(bool checked)
         kif::Frame* frame = m_scene.add_frames();
         kif::SkeletonData* data = frame->add_skeleton_data();
         data->set_etrackingstate(skd.eTrackingState);
+        data->set_dwtrackingid(skd.dwTrackingID);
+        data->set_dwenrollmentindex(skd.dwEnrollmentIndex);
+        data->set_dwuserindex(skd.dwUserIndex);
+        data->set_dwqualityflags(skd.dwQualityFlags);
 
-        std::vector<float> pos(2 * NUI_SKELETON_POSITION_COUNT);
+        auto u_skel_pos = std::make_unique<kif::SkeletonData::Vector>();
+        u_skel_pos->set_x(skd.Position.x);
+        u_skel_pos->set_y(skd.Position.y);
+        u_skel_pos->set_z(skd.Position.z);
+        u_skel_pos->set_w(skd.Position.w);
+        data->set_allocated_position(u_skel_pos.release());
+
+
+        std::vector<float> pos(2 * NUI_SKELETON_POSITION_COUNT); // for graphical output
 
         for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
         {
@@ -135,7 +147,7 @@ void main_window::start_record(bool checked)
             vec->set_w(skd.SkeletonPositions[i].w);
             //std::cout << vec->x() << "\t" << vec->y() << "\t" << vec->z() << std::endl;
             data->add_eskeletonpositiontrackingstate(skd.eSkeletonPositionTrackingState[i]);
-
+            
             pos[2 * i] = vec->x();
             pos[2 * i + 1] = vec->y();
         }
