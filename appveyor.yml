@@ -34,7 +34,6 @@ before_build:
         "v100" {"Visual Studio 10 2010"}
     }
     $conan_arch = "x86"
-    |
     if ($env:PLATFORM -eq "x64")
     {
         $generator = "$generator Win64"
