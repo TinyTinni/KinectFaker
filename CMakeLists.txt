@@ -8,7 +8,7 @@ option (BUILD_TESTS "Build Tests" ON)
 
 if (USE_CONAN)
     # Initialize Conan #############################################################
-    INCLUDE(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    INCLUDE(conanbuildinfo.cmake)
     CONAN_BASIC_SETUP()
 endif()
 
