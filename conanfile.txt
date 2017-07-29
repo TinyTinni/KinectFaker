@@ -1,0 +1,5 @@
+[requires]
+Protobuf/3.1.0@inexorgame/stable
+
+[generators]
+cmake
