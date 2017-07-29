@@ -1,6 +1,14 @@
 cmake_minimum_required( VERSION 3.1 )
 project( Tests )
 
+find_package( KinectSDK QUIET )
+if (NOT KinectSDK_FOUND)
+    find_path(KinectSDK_INCLUDE_DIRS
+        NAMES "NuiApi.h"
+        DOC "Kinect10 Header directory"
+    )
+endif()
+
 #search catch
 find_path(
     CATCH_INCLUDE_DIR 
@@ -48,7 +56,7 @@ PUBLIC
 )
 
 target_link_libraries(tests PUBLIC
-    ${KinectSDK_LIBRARIES}
+    Kinect10
     )
     
 set_target_properties(tests PROPERTIES

@@ -1,77 +1,75 @@
-os:
-  - Visual Studio 2017
-
+version: 1.0.{build}
+image: Visual Studio 2017
 configuration:
-  #- Release
-  - Debug
-
-install:
-  ############################################################################
-  # All external dependencies are installed in C:\projects\deps
-  ############################################################################
-  - mkdir C:\projects\deps
-  - cd C:\projects\deps
-  # Kinect Headers
-  - git clone https://gist.github.com/2209b0baaec9ef1d61e729b757f9210f.git Headers
-  # Protobuf using conan
-  - set PATH=%PATH%;%PYTHON%/Scripts/
-  - pip.exe install conan
-version: '{build}'
-
+- Debug
+- Release
+platform:
+- x86
+- x64
 environment:
   matrix:
-  - Toolset: v150
   - Toolset: v140
-  #- Toolset: v120
-  #- Toolset: v110
-  #- Toolset: v100
-
-platform:
-  - Win32
-  - x64
-
-build:
-  verbosity: minimal
-
+  - Toolset: v150
+install:
+- ps: >-
+    ############################################################################
+      # All external dependencies are installed in C:\projects\deps
+      ############################################################################
+    mkdir C:\projects\deps
+    cd C:\projects\deps
+    # Kinect Headers
+    mkdir Headers
+    appveyor DownloadFile 'https://gist.github.com/TinyTinni/2209b0baaec9ef1d61e729b757f9210f/archive/bee0361721a66856542274f59ad3ed733b8a9c43.zip' -FileName Headers.zip
+    7z.exe e Headers.zip -o*
+    # Protobuf using conan
+    pip.exe install conan
+    cd "$env:APPVEYOR_BUILD_FOLDER"
+    
 before_build:
-- ps: |
-    Write-Output "Configuration: $env:CONFIGURATION"
+- ps: >-
+    Write-Output "Configuration: $env:CONFIGURATION" 
     Write-Output "Platform: $env:PLATFORM"
     $generator = switch ($env:TOOLSET)
     {
-        "v150" {"Visual Studio 15 2017"}
-        "v140" {"Visual Studio 14 2015"}
-        "v120" {"Visual Studio 12 2013"}
-        "v110" {"Visual Studio 11 2012"}
-        "v100" {"Visual Studio 10 2010"}
+    "v150" {"Visual Studio 15 2017"}
+    "v140" {"Visual Studio 14 2015"}
+    "v120" {"Visual Studio 12 2013"}
+    "v110" {"Visual Studio 11 2012"}
+    "v100" {"Visual Studio 10 2010"}
     }
+    $conan_arch = "x86"
     if ($env:PLATFORM -eq "x64")
     {
-        $generator = "$generator Win64"
+    $generator = "$generator Win64"
+    $conan_arch = "x86_64"
     }
-
-build_script:
-- ps: |
     cd "$env:APPVEYOR_BUILD_FOLDER"
-    #configure conan
     conan user
     conan --version
-    conan install
-    #configure cmake
+    $conan_compiler_v = switch ($env:TOOLSET)
+    {
+    "v150" {"15"}
+    "v140" {"14"}
+    "v130" {"13"}
+    }
+    $conan_runtime = switch($env:CONFIGURATION)
+    {
+    "Release" {"MD"}
+    "Debug" {"MDd"}
+    }
+    $conan_build_type = $env:CONFIGURATION
+    conan install --build=missing -s build_type=$conan_build_type -s compiler.version=$conan_compiler_v -s arch=$conan_arch -s compiler.runtime=$conan_runtime
+    cmake --version
+    
     md build -Force | Out-Null
-    cd build
-    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DCMAKE_TOOLCHAIN_FILE="C:\C:\projects\deps\vcpkg\scripts\buildsystems\vcpkg.cmake" ..
+    cd build 
+    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DUSE_CONAN=ON -DBUILD_TESTS=OFF ..
     if ($LastExitCode -ne 0) {
-        throw "Exec: $ErrorMessage"
+    throw "Exec: $ErrorMessage"
     }
-    & cmake --build . --config $env:CONFIGURATION
+    
+build_script:
+    cmake --build . --config $env:CONFIGURATION
     if ($LastExitCode -ne 0) {
-        throw "Exec: $ErrorMessage"
+    throw "Exec: $ErrorMessage"
     }
-
-#test_script:
-#- ps: |
-#    ctest -C $env:CONFIGURATION --output-on-failure
-#    if ($LastExitCode -ne 0) {
-#        throw "Exec: $ErrorMessage"
-#    }
