@@ -2,6 +2,17 @@ cmake_minimum_required( VERSION 3.1 )
 set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} )
 project( KinectFaker )
 
+option(USE_CONAN OFF)
+option (BUILD_GUI "Build GUI" ON)	
+option (BUILD_TESTS "Build Tests" ON)
+
+if (USE_CONAN)
+    # Initialize Conan #############################################################
+    INCLUDE(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    CONAN_BASIC_SETUP()
+endif()
+
+
 # Find Protobuf
 find_package( Protobuf REQUIRED )
 
@@ -15,12 +26,10 @@ target_link_libraries(protobuf_def PUBLIC protobuf::libprotobuf)
 add_subdirectory("Proxy")
 
 ## (optional) Player - plays ksk files
-option (BUILD_GUI "Build GUI" ON)	
 if(BUILD_GUI)
 	add_subdirectory("GUI")
 endif(BUILD_GUI)
 
-option (BUILD_TESTS "Build Tests" ON)
 if (BUILD_TESTS)
 	SET(CTEST_OUTPUT_ON_FAILURE ON)
 	enable_testing()
