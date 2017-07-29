@@ -54,7 +54,7 @@ before_build:
         "Debug" {"MDd"}
     }
     $conan_build_type = $env:CONFIGURATION
-    conan install --build=missing -s build_type=$conan_build_type -s compiler.version=$conan_compiler_v -s arch=$conan_arch -s compiler.runtime=$conan_runtime -o protobuf:shared="False" -o protobuf fPIC="False"
+    conan install --build=missing -s build_type=$conan_build_type -s compiler.version=$conan_compiler_v -s arch=$conan_arch -s compiler.runtime=$conan_runtime -o protobuf:shared="False" -o protobuf:fPIC="False"
     cmake --version
     md build -Force | Out-Null
     cd build 
