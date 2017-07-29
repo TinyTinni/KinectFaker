@@ -35,24 +35,8 @@ find_path(
 
 if (NOT JSON_INCLUDE_DIR)
     message(STATUS "Could not find nlohmann-json. Create Download target.")
-    include(ExternalProject)
-    find_package(Git REQUIRED)
-    ExternalProject_Add(
-        json
-        PREFIX ${CMAKE_BINARY_DIR}/json
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        TIMEOUT 10
-        UPDATE_COMMAND ${GIT_EXECUTABLE} pull
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-        LOG_DOWNLOAD ON
-    )
-    
-    # Expose required variable (CATCH_INCLUDE_DIR) to parent scope
-    ExternalProject_Get_Property(json source_dir)
-    set(JSON_INCLUDE_DIR ${source_dir}/src)
-    add_dependencies(Kinect10 json)
+    file(DOWNLOAD "https://raw.githubusercontent.com/nlohmann/json/develop/src/json.hpp" "${CMAKE_CURRENT_BINARY_DIR }/nlohmann/json.hpp")
+    set(JSON_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR }/nlohmann")
 endif()
 
 

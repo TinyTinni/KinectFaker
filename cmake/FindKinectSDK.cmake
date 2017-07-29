@@ -162,8 +162,6 @@ if(KinectSDK_FOUND)
   check_files(KinectSDK_LIBRARIES KinectSDK_LIBRARY_DIRS)
 endif()
 
-message(STATUS "KinectSDK_FOUND : ${KinectSDK_FOUND}")
-
 ##### Find Kinect Developer Toolkit v1 #####
 
 # Options
@@ -284,6 +282,5 @@ if(KinectToolkit)
     endif()
   endif()
 
-  message(STATUS "KinectToolkit_FOUND : ${KinectToolkit_FOUND}")
 endif()
 endif(NOT KinectSDK_FOUND)
