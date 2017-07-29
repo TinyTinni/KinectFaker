@@ -1,6 +1,7 @@
 ﻿# Kinect Skeleton Tracking Emulator using DLL-Proxy
 
-https://ci.appveyor.com/api/projects/status/or1c1gl2kpycc2i9?svg=true
+[![Build status](https://ci.appveyor.com/api/projects/status/or1c1gl2kpycc2i9?svg=true)](https://ci.appveyor.com/project/TinyTinni/kinectfaker)
+
 
 Emulates a Kinect Device (Version 1) with Skeleton Tracking Enabled.
 The Emulator enables testing of Kinect Applications without connected Kinect 
