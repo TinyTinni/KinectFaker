@@ -164,6 +164,15 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
         // For optimization.
         DisableThreadLibraryCalls(hDllHandle);
 
+        // create loggers
+        g_log = spdlog::stdout_color_mt("fk_proxy");
+        g_log->set_level(spdlog::level::trace);
+        
+        g_callLog = spdlog::stdout_logger_mt("call");
+        g_callLog->set_level(spdlog::level::off);
+        
+        g_log->trace("Init Kinect Proxy.");
+
         // get original functions
         std::basic_string<TCHAR> systemdir(GetSystemDirectory(nullptr, 0)-1, _T('\0'));
         if (!GetSystemDirectory(&systemdir[0], static_cast<UINT>(systemdir.size())+1u))
@@ -176,20 +185,9 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
         // Cannot find original .dll. Return false until the proxy-dll was tested without installed Kinect.
         // Anyway, it is not a good idea to not install at least the Kinect Redist
         if (!kinectHndl)
-            return false;
-
-
-        if (!g_log)
-        {
-            g_log = spdlog::stdout_color_mt("fk_proxy");
-            g_log->set_level(spdlog::level::trace);
-        }
-        if (!g_callLog)
-        {
-            g_callLog = spdlog::stdout_logger_mt("call");
-            g_callLog->set_level(spdlog::level::off);
-        }
-        g_log->trace("Init Kinect Proxy.");
+            g_log->warn("Could not load original dll at: {}", kdll_path);
+        else
+            g_log->trace("Loaded original Kinect10.dll");
 
         // Don't return false. Even if there are parsing errors or warnings,
         // library should be able redirect to the original Kinect10.dll even without Fake Devices
@@ -203,11 +201,25 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
 
         break;
     }
-
-    
-
     return true;
 
+}
+
+template<typename R, typename ...Args>
+bool call_nui(R& r, const char* name, Args... a)
+{
+    if (!kinectHndl)
+        return false;
+
+    static std::unordered_map<const char*, FARPROC> cached_procs;
+
+    g_callLog->trace("{} ()", name);
+    typedef R(*func)(Args...);
+    auto it = cached_procs.find(name);
+    if (it == cached_procs.end())
+        it = cached_procs.emplace(name, GetProcAddress(kinectHndl, name)).first;
+    r = reinterpret_cast<func>(it->second)(std::forward<Args...>(a)...);
+    return true;
 }
 
 //---------------------------------------------------------------------
@@ -216,11 +228,9 @@ HRESULT NUIAPI NuiGetSensorCount(
     int *pCount
 )
 {
-    g_callLog->trace("{} ()", "NuiGetSensorCount");
-    typedef HRESULT(*func)(int*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiGetSensorCount");
-    HRESULT r = reinterpret_cast<func>(f)(pCount);
-
+    HRESULT r = S_OK;
+    if (!call_nui(r, "NuiGetSensorCount", pCount))
+        *pCount = 0;
     if (FAILED(r))
         return r;
     *pCount += static_cast<int>(g_devices.size());
@@ -245,11 +255,11 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
     }
     index -= pCount;
     if (index >= g_devices.size())
-        return ERROR_INVALID_INDEX; //msdn doc is wrong with returning values for this function. Check correct values by testing...
+        return E_NUI_BADINDEX;
 
     std::ifstream scene_file(g_devices[index]->filename, std::ios::binary);
     if (!scene_file.is_open())
-        return STG_E_FILENOTFOUND;
+        return E_NUI_BADINDEX;
 
     kif::Scene scene;
     if (!scene.ParseFromIstream(&scene_file))

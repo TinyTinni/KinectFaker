@@ -16,7 +16,7 @@ install:
   # Protobuf
   - git clone https://github.com/Microsoft/vcpkg vcpkg
   - cd vcpkg
-  - vcpkg .\bootstrap-vcpkg.bat
+  - .\bootstrap-vcpkg.bat
   - vcpkg install protobuf protobuf:x64-windows
 version: '{build}'
 
