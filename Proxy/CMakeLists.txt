@@ -1,20 +1,26 @@
 cmake_minimum_required( VERSION 3.1 )
 project( Kinect_Proxy )
 
-## Faker library
+###############################################################
+# Protobuf
+###############################################################
+find_package( Protobuf REQUIRED )
 
-set (SOURCES
-    "${CMAKE_SOURCE_DIR}/Readme.md"
-    "NuiSensor_Faker.h"
-    "NuiSensor_Faker.cpp"
-    "Proxy.cpp"
-    
-    "Kinect10.def"
+
+###############################################################
+# kinect Headers
+###############################################################
+find_package( KinectSDK QUIET )
+if (NOT KinectSDK_FOUND)
+    find_path(KinectSDK_INCLUDE_DIRS
+        NAMES "NuiApi.h"
+        DOC "Kinect10 Header directory"
     )
+endif()
+###############################################################
+# json
+###############################################################
 
-add_library( Kinect10 SHARED "${SOURCES}")
-
-#search json
 find_path(
     JSON_INCLUDE_DIR 
     NAMES json.hpp
@@ -43,6 +49,11 @@ if (NOT JSON_INCLUDE_DIR)
     set(JSON_INCLUDE_DIR ${source_dir}/src)
 endif()
 
+
+###############################################################
+# spdlog
+###############################################################
+
 find_path(
     SPDLOG_INCLUDE_DIR 
     NAMES spdlog.h
@@ -70,6 +81,20 @@ if (NOT SPDLOG_INCLUDE_DIR)
     set(SPDLOG_INCLUDE_DIR ${source_dir}/include)
 endif()
 
+
+###############################################################
+
+set (SOURCES
+    "${CMAKE_SOURCE_DIR}/Readme.md"
+    "NuiSensor_Faker.h"
+    "NuiSensor_Faker.cpp"
+    "Proxy.cpp"
+    
+    "Kinect10.def"
+    )
+
+add_library( Kinect10 SHARED "${SOURCES}")
+
 target_include_directories(Kinect10  
 PRIVATE
     ${KinectSDK_INCLUDE_DIRS} 
@@ -80,7 +105,7 @@ PRIVATE
 target_link_libraries(Kinect10
 PUBLIC
     protobuf_def   
-    debug comsuppwd.lib optimized comsuppw.lib 
+    debug comsuppwd.lib optimized comsuppw.lib #comsupport for _bstr_t
     )
     
 target_compile_definitions(Kinect10

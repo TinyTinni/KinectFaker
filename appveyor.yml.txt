@@ -1,0 +1,67 @@
+os:
+  - Visual Studio 2017
+
+configuration:
+  #- Release
+  - Debug
+
+install:
+  ############################################################################
+  # All external dependencies are installed in C:\projects\deps
+  ############################################################################
+  - mkdir C:\projects\deps
+  - cd C:\projects\deps
+  - git clone git@gist.github.com:2209b0baaec9ef1d61e729b757f9210f.git Headers
+version: '{build}'
+
+environment:
+  matrix:
+  - Toolset: v150
+  - Toolset: v140
+  #- Toolset: v120
+  #- Toolset: v110
+  #- Toolset: v100
+
+platform:
+  - Win32
+  - x64
+
+build:
+  verbosity: minimal
+
+before_build:
+- ps: |
+    Write-Output "Configuration: $env:CONFIGURATION"
+    Write-Output "Platform: $env:PLATFORM"
+    $generator = switch ($env:TOOLSET)
+    {
+        "v150" {"Visual Studio 15 2017"}
+        "v140" {"Visual Studio 14 2015"}
+        "v120" {"Visual Studio 12 2013"}
+        "v110" {"Visual Studio 11 2012"}
+        "v100" {"Visual Studio 10 2010"}
+    }
+    if ($env:PLATFORM -eq "x64")
+    {
+        $generator = "$generator Win64"
+    }
+
+build_script:
+- ps: |
+    md tests/build -Force | Out-Null
+    cd tests/build
+    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF ..
+    if ($LastExitCode -ne 0) {
+        throw "Exec: $ErrorMessage"
+    }
+    & cmake --build . --config $env:CONFIGURATION
+    if ($LastExitCode -ne 0) {
+        throw "Exec: $ErrorMessage"
+    }
+
+#test_script:
+#- ps: |
+#    ctest -C $env:CONFIGURATION --output-on-failure
+#    if ($LastExitCode -ne 0) {
+#        throw "Exec: $ErrorMessage"
+#    }

@@ -16,10 +16,10 @@ target_link_libraries(protobuf_def PUBLIC protobuf::libprotobuf)
 add_subdirectory("Proxy")
 
 ## (optional) Player - plays ksk files
-option (BUILD_PLAYER "Build GUI" ON)	
-if(BUILD_PLAYER)
+option (BUILD_GUI "Build GUI" ON)	
+if(BUILD_GUI)
 	add_subdirectory("GUI")
-endif(BUILD_PLAYER)
+endif(BUILD_GUI)
 
 option (BUILD_TESTS "Build Tests" ON)
 if (BUILD_TESTS)

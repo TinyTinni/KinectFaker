@@ -84,7 +84,7 @@
 # =============================================================================
 
 ##### Utility #####
-
+if (NOT KinectSDK_FOUND)
 # Check Directory Macro
 macro(CHECK_DIR _DIR)
   if(NOT EXISTS "${${_DIR}}")
@@ -287,3 +287,4 @@ if(KinectToolkit)
 
   message(STATUS "KinectToolkit_FOUND : ${KinectToolkit_FOUND}")
 endif()
+endif(NOT KinectSDK_FOUND)
