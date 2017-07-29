@@ -28,9 +28,9 @@ class INuiSensor_Faker : public INuiSensor
 
 
         // INuiSensor overloaded functions
-        virtual ULONG Release();
-        virtual ULONG AddRef();
-        virtual HRESULT QueryInterface(const IID&, void**);
+        virtual ULONG STDMETHODCALLTYPE Release();
+        virtual ULONG STDMETHODCALLTYPE AddRef();
+        virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID&, void**);
 
 
         virtual HRESULT STDMETHODCALLTYPE NuiInitialize( 
