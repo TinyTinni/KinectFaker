@@ -11,7 +11,7 @@ install:
   ############################################################################
   - mkdir C:\projects\deps
   - cd C:\projects\deps
-  - git clone git@gist.github.com:2209b0baaec9ef1d61e729b757f9210f.git Headers
+  - git clone https://gist.github.com/2209b0baaec9ef1d61e729b757f9210f.git Headers
 version: '{build}'
 
 environment:
