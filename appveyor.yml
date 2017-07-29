@@ -34,16 +34,16 @@ before_build:
             "v110" {"Visual Studio 11 2012"}
             "v100" {"Visual Studio 10 2010"}
         }
-    - $conan_arch = "x86"
+    - ps: $conan_arch = "x86"
     -ps: |
         if ($env:PLATFORM -eq "x64")
         {
             $generator = "$generator Win64"
             $conan_arch = "x86_64"
         }
-    - cd "$env:APPVEYOR_BUILD_FOLDER"
-    - conan user
-    - conan --version
+    - ps: cd "$env:APPVEYOR_BUILD_FOLDER"
+    - ps: conan user
+    - ps: conan --version
     - ps: |
         $conan_compiler_v = switch ($env:TOOLSET)
         {
@@ -57,17 +57,17 @@ before_build:
             "Release" {"MD"}
             "Debug" {"MDd"}
         }
-    - $conan_build_type = $env:CONFIGURATION
-    - conan install --build=missing -s build_type=$conan_build_type -s compiler.version=$conan_compiler_v -s arch=$conan_arch -s compiler.runtime=$conan_runtime
-    - cmake --version
-    - md build -Force | Out-Null
-    - cd build 
-    - cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DUSE_CONAN=ON -DBUILD_TESTS=OFF ..
+    - ps: $conan_build_type = $env:CONFIGURATION
+    - ps: conan install --build=missing -s build_type=$conan_build_type -s compiler.version=$conan_compiler_v -s arch=$conan_arch -s compiler.runtime=$conan_runtime
+    - ps: cmake --version
+    - ps: md build -Force | Out-Null
+    - ps: cd build 
+    - ps: cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DUSE_CONAN=ON -DBUILD_TESTS=OFF ..
     -ps: |
         if ($LastExitCode -ne 0) {
             throw "Exec: $ErrorMessage"
         }
-    - cmake --build . --config $env:CONFIGURATION
+    - ps: cmake --build . --config $env:CONFIGURATION
     - ps: |
         if ($LastExitCode -ne 0) {
             throw "Exec: $ErrorMessage"
