@@ -1,6 +1,17 @@
 cmake_minimum_required( VERSION 3.1 )
 project( Kinect_Proxy )
 
+
+set (SOURCES
+    "${CMAKE_SOURCE_DIR}/Readme.md"
+    "NuiSensor_Faker.h"
+    "NuiSensor_Faker.cpp"
+    "Proxy.cpp"
+    
+    "Kinect10.def"
+    )
+
+add_library( Kinect10 SHARED "${SOURCES}")
 ###############################################################
 # kinect Headers
 ###############################################################
@@ -41,6 +52,7 @@ if (NOT JSON_INCLUDE_DIR)
     # Expose required variable (CATCH_INCLUDE_DIR) to parent scope
     ExternalProject_Get_Property(json source_dir)
     set(JSON_INCLUDE_DIR ${source_dir}/src)
+    add_dependencies(Kinect10 json)
 endif()
 
 
@@ -73,21 +85,11 @@ if (NOT SPDLOG_INCLUDE_DIR)
     # Expose required variable (CATCH_INCLUDE_DIR) to parent scope
     ExternalProject_Get_Property(spdlog source_dir)
     set(SPDLOG_INCLUDE_DIR ${source_dir}/include)
+    add_dependencies(Kinect10 spdlog)
 endif()
 
 
 ###############################################################
-
-set (SOURCES
-    "${CMAKE_SOURCE_DIR}/Readme.md"
-    "NuiSensor_Faker.h"
-    "NuiSensor_Faker.cpp"
-    "Proxy.cpp"
-    
-    "Kinect10.def"
-    )
-
-add_library( Kinect10 SHARED "${SOURCES}")
 
 target_include_directories(Kinect10  
 PRIVATE
