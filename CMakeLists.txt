@@ -20,7 +20,7 @@ find_package( Protobuf REQUIRED )
 protobuf_generate_cpp(PROTO_SRC PROTO_HDR "KinectFileDef.proto")
 add_library(protobuf_def ${PROTO_SRC} "${PROTO_HDR};KinectFileDef.proto")
 target_include_directories(protobuf_def PUBLIC ${PROTOBUF_INCLUDE_DIR})
-target_link_libraries(protobuf_def PUBLIC protobuf::libprotobuf)
+target_link_libraries(protobuf_def PUBLIC ${Protobuf_LIBRARIES})
 
 # Faker library
 add_subdirectory("Proxy")
