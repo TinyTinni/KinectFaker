@@ -88,7 +88,6 @@ if (NOT KinectSDK_FOUND)
 # Check Directory Macro
 macro(CHECK_DIR _DIR)
   if(NOT EXISTS "${${_DIR}}")
-    message(WARNING "Directory \"${${_DIR}}\" not found.")
     if("${_DIR}" MATCHES KinectSDK_.*)
       set(KinectSDK_FOUND FALSE)
     else()
