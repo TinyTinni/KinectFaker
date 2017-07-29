@@ -1,15 +1,15 @@
 version: 1.0.{build}
 image: Visual Studio 2017
 configuration:
-- Debug
-- Release
+    - Debug
+    - Release
 platform:
-- x86
-- x64
+    - x86
+    - x64
 environment:
-  matrix:
-  - Toolset: v140
-  - Toolset: v150
+    matrix:
+        - Toolset: v140
+        - Toolset: v150
 install:
     ############################################################################
       # All external dependencies are installed in C:\projects\deps
