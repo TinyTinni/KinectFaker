@@ -2,8 +2,7 @@ cmake_minimum_required( VERSION 3.1 )
 set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} )
 project( KinectFaker )
 
-# Find Kinect SDK v1
-find_package( KinectSDK REQUIRED )
+# Find Protobuf
 find_package( Protobuf REQUIRED )
 
 # protobuf lib
