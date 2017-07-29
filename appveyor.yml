@@ -22,7 +22,6 @@ install:
     - 7z.exe e Headers.zip -o*
     # Protobuf using conan
     - pip.exe install conan
-    - cd "$env:APPVEYOR_BUILD_FOLDER"
     
 before_build:
 - ps: |
@@ -41,7 +40,7 @@ before_build:
         $generator = "$generator Win64"
         $conan_arch = "x86_64"
     }
-    cd "$env:APPVEYOR_BUILD_FOLDER"
+    cd $env:APPVEYOR_BUILD_FOLDER
     conan user
     conan --version
     $conan_compiler_v = switch ($env:TOOLSET)
