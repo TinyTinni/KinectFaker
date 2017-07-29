@@ -31,31 +31,31 @@ before_build:
     Write-Output "Platform: $env:PLATFORM"
     $generator = switch ($env:TOOLSET)
     {
-    "v150" {"Visual Studio 15 2017"}
-    "v140" {"Visual Studio 14 2015"}
-    "v120" {"Visual Studio 12 2013"}
-    "v110" {"Visual Studio 11 2012"}
-    "v100" {"Visual Studio 10 2010"}
+        "v150" {"Visual Studio 15 2017"}
+        "v140" {"Visual Studio 14 2015"}
+        "v120" {"Visual Studio 12 2013"}
+        "v110" {"Visual Studio 11 2012"}
+        "v100" {"Visual Studio 10 2010"}
     }
     $conan_arch = "x86"
     if ($env:PLATFORM -eq "x64")
     {
-    $generator = "$generator Win64"
-    $conan_arch = "x86_64"
+        $generator = "$generator Win64"
+        $conan_arch = "x86_64"
     }
     cd "$env:APPVEYOR_BUILD_FOLDER"
     conan user
     conan --version
     $conan_compiler_v = switch ($env:TOOLSET)
     {
-    "v150" {"15"}
-    "v140" {"14"}
-    "v130" {"13"}
+        "v150" {"15"}
+        "v140" {"14"}
+        "v130" {"13"}
     }
     $conan_runtime = switch($env:CONFIGURATION)
     {
-    "Release" {"MD"}
-    "Debug" {"MDd"}
+        "Release" {"MD"}
+        "Debug" {"MDd"}
     }
     $conan_build_type = $env:CONFIGURATION
     conan install --build=missing -s build_type=$conan_build_type -s compiler.version=$conan_compiler_v -s arch=$conan_arch -s compiler.runtime=$conan_runtime
@@ -65,11 +65,9 @@ before_build:
     cd build 
     cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DUSE_CONAN=ON -DBUILD_TESTS=OFF ..
     if ($LastExitCode -ne 0) {
-    throw "Exec: $ErrorMessage"
+        throw "Exec: $ErrorMessage"
     }
-    
-build_script:
     cmake --build . --config $env:CONFIGURATION
     if ($LastExitCode -ne 0) {
-    throw "Exec: $ErrorMessage"
+        throw "Exec: $ErrorMessage"
     }
