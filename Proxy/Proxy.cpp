@@ -144,7 +144,7 @@ bool create_devices()
     }
     catch (...)
     {
-        std::cerr << "Kinect Faker: Unknown Error.\n";
+        g_log->critical("Kinect Faker: Unknown Error while reading config file.");
         return false;
     }
 
