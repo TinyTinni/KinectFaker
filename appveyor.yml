@@ -11,8 +11,13 @@ install:
   ############################################################################
   - mkdir C:\projects\deps
   - cd C:\projects\deps
+  # Kinect Headers
   - git clone https://gist.github.com/2209b0baaec9ef1d61e729b757f9210f.git Headers
-  - cinst protoc
+  # Protobuf
+  - git clone https://github.com/Microsoft/vcpkg vcpkg
+  - cd vcpkg
+  - vcpkg .\bootstrap-vcpkg.bat
+  - vcpkg install protobuf protobuf:x64-windows
 version: '{build}'
 
 environment:
@@ -52,7 +57,7 @@ build_script:
     cd "$env:APPVEYOR_BUILD_FOLDER"
     md build -Force | Out-Null
     cd build
-    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF ..
+    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DCMAKE_TOOLCHAIN_FILE="C:\C:\projects\deps\vcpkg\scripts\buildsystems\vcpkg.cmake" ..
     if ($LastExitCode -ne 0) {
         throw "Exec: $ErrorMessage"
     }
