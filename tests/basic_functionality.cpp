@@ -4,13 +4,11 @@
 #include <NuiApi.h>
 
 TEST_CASE("init Devices", "[init]")
-{
-
-    int n_devices;
-    HRESULT hr = NuiGetSensorCount(&n_devices);
+{  
     const DWORD init_flags = NUI_INITIALIZE_FLAG_USES_SKELETON;
 
-    REQUIRE(SUCCEEDED(hr));
+    int n_devices;
+    REQUIRE(SUCCEEDED(NuiGetSensorCount(&n_devices)));
     REQUIRE(n_devices > 0);
 
     const auto test_basic_props_fn = [&n_devices, init_flags](INuiSensor* device)
@@ -25,31 +23,65 @@ TEST_CASE("init Devices", "[init]")
     SECTION("create by index")
     {
         INuiSensor* device;
-        hr = NuiCreateSensorByIndex(n_devices - 1, &device);
-        REQUIRE(SUCCEEDED(hr));
-        hr = device->NuiInitialize(init_flags);
-        REQUIRE(SUCCEEDED(hr));
+        REQUIRE(SUCCEEDED(NuiCreateSensorByIndex(n_devices - 1, &device)));
+        REQUIRE(SUCCEEDED(device->NuiInitialize(init_flags)));
 
         test_basic_props_fn(device);
 
+        device->NuiShutdown();
         device->Release();
     }
     SECTION("create by connection id")
     {
         INuiSensor* device;
-        hr = NuiCreateSensorById(L"testingConnection", &device);
-        REQUIRE(SUCCEEDED(hr));
-        hr = device->NuiInitialize(init_flags);
-        REQUIRE(SUCCEEDED(hr));
+        REQUIRE(SUCCEEDED(NuiCreateSensorById(L"testingConnection", &device)));
+        REQUIRE(SUCCEEDED(device->NuiInitialize(init_flags)));
 
         test_basic_props_fn(device);
         
+        device->NuiShutdown();
         device->Release();
     }
     SECTION("create single device")
     {
-        hr = NuiInitialize(init_flags);
-        REQUIRE(SUCCEEDED(hr));
+        REQUIRE(SUCCEEDED(NuiInitialize(init_flags)));
         NuiShutdown();
     }
+}
+
+TEST_CASE("get skeleton frame", "[skeleton]")
+{
+    INuiSensor* device;
+
+    {
+        //checked by the init function
+        int n_devices;
+        NuiGetSensorCount(&n_devices);
+        NuiCreateSensorByIndex(n_devices - 1, &device);
+        device->NuiInitialize(NUI_INITIALIZE_FLAG_USES_SKELETON);
+    }
+
+    HANDLE nextFrameEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    REQUIRE(SUCCEEDED(device->NuiSkeletonTrackingEnable(nextFrameEvent, 0)));
+
+    //check if the next 10 frames has a tracked skeleton
+    for (size_t i = 0; i < 10; ++i)
+    {
+        //wait max 33ms since the Fake kinect should return frames with 30fps = 30ms (+10%)
+        REQUIRE(WaitForSingleObject(nextFrameEvent, 33) == WAIT_OBJECT_0);
+        NUI_SKELETON_FRAME frame;
+        REQUIRE(SUCCEEDED(device->NuiSkeletonGetNextFrame(0, &frame)));
+        int tracked_skeletons = 0;
+        for (size_t j = 0; j < NUI_SKELETON_COUNT; ++j)
+        {
+            const auto& skd = frame.SkeletonData[j];
+            tracked_skeletons += skd.eTrackingState == NUI_SKELETON_TRACKED;
+        }
+
+        REQUIRE(tracked_skeletons == 1);
+
+    }
+
+    device->NuiShutdown();
+    device->Release();
 }

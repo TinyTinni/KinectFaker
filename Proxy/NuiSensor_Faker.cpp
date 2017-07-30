@@ -1,8 +1,6 @@
 #include "NuiSensor_Faker.h"
 
-#include <iostream>
 #include <utility>
-
 
 ULONG INuiSensor_Faker::Release()
 {
