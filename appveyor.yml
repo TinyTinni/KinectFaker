@@ -11,6 +11,8 @@ environment:
         - Toolset: v140
         - Toolset: v150
 install:
+    - git submodule init
+    - git submodule update
     ############################################################################
       # All external dependencies are installed in C:\projects\deps
       ############################################################################
