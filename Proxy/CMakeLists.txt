@@ -81,11 +81,13 @@ PRIVATE
     ${CMAKE_BINARY_DIR} # for proto
     ${JSON_INCLUDE_DIR}
     ${SPDLOG_INCLUDE_DIR}
+    "${CMAKE_SOURCE_DIR}/outcome/include"
     )
 target_link_libraries(Kinect10
 PUBLIC
     protobuf_def   
     debug comsuppwd.lib optimized comsuppw.lib #comsupport for _bstr_t
+    outcome::hl
     )
     
 target_compile_definitions(Kinect10

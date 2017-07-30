@@ -25,6 +25,10 @@
 #define SPDLOG_NO_DATETIME
 #include <spdlog/spdlog.h>
 
+#include <system_error>
+#include <outcome.hpp>
+
+namespace outcome = OUTCOME_V2_NAMESPACE;
 namespace js = nlohmann;
 
 struct FakeDevice
@@ -45,7 +49,7 @@ INuiSensor_Faker* g_singleDevice = NULL; // device which is used in single devic
 std::shared_ptr<spdlog::logger> g_log = nullptr;
 std::shared_ptr<spdlog::logger> g_callLog = nullptr;
 
-bool file_exists(const char* name)
+bool file_exists(const _bstr_t name)
 {
     const auto fileAttrib = GetFileAttributes(name);
     return (fileAttrib == INVALID_FILE_ATTRIBUTES || (fileAttrib & FILE_ATTRIBUTE_DIRECTORY));
@@ -178,14 +182,14 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
         if (!GetSystemDirectory(&systemdir[0], static_cast<UINT>(systemdir.size())+1u))
             return false;
 
-        const auto kdll_path = systemdir + _T("\\Kinect10.dll");
+        const _bstr_t kdll_path = _bstr_t(systemdir.c_str()) + _T("\\Kinect10.dll");
 
-        kinectHndl = LoadLibraryEx(kdll_path.c_str(), NULL, 0);
+        kinectHndl = LoadLibraryEx(kdll_path, NULL, 0);
 
         // Cannot find original .dll. Return false until the proxy-dll was tested without installed Kinect.
         // Anyway, it is not a good idea to not install at least the Kinect Redist
         if (!kinectHndl)
-            g_log->warn("Could not load original dll at: {}", kdll_path);
+            g_log->warn("Could not load original dll at: {}", static_cast<const char*>(kdll_path));
         else
             g_log->trace("Loaded original Kinect10.dll");
 
@@ -206,10 +210,10 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
 }
 
 template<typename R, typename ...Args>
-bool call_nui(R& r, const char* name, Args... a)
+outcome::result<R> call_nui(const char* name, Args... a)
 {
     if (!kinectHndl)
-        return false;
+        return std::errc::host_unreachable;
 
     static std::unordered_map<const char*, FARPROC> cached_procs;
 
@@ -217,9 +221,14 @@ bool call_nui(R& r, const char* name, Args... a)
     typedef R(*func)(Args...);
     auto it = cached_procs.find(name);
     if (it == cached_procs.end())
-        it = cached_procs.emplace(name, GetProcAddress(kinectHndl, name)).first;
-    r = reinterpret_cast<func>(it->second)(std::forward<Args...>(a)...);
-    return true;
+        it = cached_procs.emplace(name, GetProcAddress(kinectHndl, name)).first;   
+    //if constexpr( std::is_same<R,void>)
+    //{
+    //  reinterpret_cast<func>(it->second)(std::forward<Args...>(a)...);
+    //  return outcome::success();
+    //}
+    //else
+    return reinterpret_cast<func>(it->second)(std::forward<Args>(a)...);
 }
 
 //---------------------------------------------------------------------
@@ -228,11 +237,16 @@ HRESULT NUIAPI NuiGetSensorCount(
     int *pCount
 )
 {
-    HRESULT r = S_OK;
-    if (!call_nui(r, "NuiGetSensorCount", pCount))
+    if (auto r = call_nui<HRESULT>("NuiGetSensorCount", pCount))
+    {
+        if (FAILED(r.value()))
+            return r.value();
+    }
+    else
+    {
         *pCount = 0;
-    if (FAILED(r))
-        return r;
+    }
+    
     *pCount += static_cast<int>(g_devices.size());
     return S_OK;
 }
@@ -241,17 +255,12 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
     INuiSensor **ppNuiSensor
 )
 {
-    g_callLog->trace("{} (index={})", "NuiCreateSensorByIndex", index);
     int pCount;
-    typedef HRESULT(*sensorCount)(int*);
-    static FARPROC sc = GetProcAddress(kinectHndl, "NuiGetSensorCount");
-    HRESULT r = reinterpret_cast<sensorCount>(sc)(&pCount);
-
+    NuiGetSensorCount(&pCount);
     if (index < pCount)
     {
-        typedef HRESULT(*func)(int, INuiSensor**);
-        static FARPROC f = GetProcAddress(kinectHndl, "NuiCreateSensorByIndex");
-        return reinterpret_cast<func>(f)(index, ppNuiSensor);
+        auto r = call_nui<HRESULT>("NuiCreateSensorByIndex", index, ppNuiSensor);
+        return (r) ? r.value() : E_NUI_BADINDEX;
     }
     index -= pCount;
     if (index >= g_devices.size())
@@ -274,9 +283,8 @@ HRESULT NUIAPI NuiCameraElevationGetAngle(
 )
 {
     g_callLog->trace("{} (...)", "NuiCameraElevationGetAngle");
-    typedef HRESULT(*func)(LONG*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiCameraElevationGetAngle");
-    return reinterpret_cast<func>(f)(plAngleDegrees);
+    auto r = call_nui<HRESULT>("NuiCameraElevationGetAngle", plAngleDegrees);
+    return (r) ? r.value() : E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiCameraElevationSetAngle(
@@ -399,7 +407,10 @@ void NUIAPI NuiShutdown()
     {
         g_singleDevice->Release();
         g_singleDevice = nullptr;
+        return;
     }
+    //else
+    //    call_nui<void>("NuiShutdown");
 
     /*typedef void(*func)();
     static FARPROC f = GetProcAddress(kinectHndl, "NuiShutdown");

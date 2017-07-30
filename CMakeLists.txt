@@ -12,6 +12,12 @@ if (USE_CONAN)
     CONAN_BASIC_SETUP()
 endif()
 
+# adding outcome
+add_subdirectory(
+  "${CMAKE_CURRENT_SOURCE_DIR}/outcome"  # path to outcome source
+  "${CMAKE_CURRENT_BINARY_DIR}/outcome"  # your choice of where to put binaries
+  EXCLUDE_FROM_ALL                       # please only lazy build outcome on demand
+)
 
 # Find Protobuf
 find_package( Protobuf REQUIRED )
