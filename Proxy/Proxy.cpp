@@ -27,6 +27,7 @@
 
 #include <system_error>
 #include <outcome.hpp>
+#include <type_traits>
 
 namespace outcome = OUTCOME_V2_NAMESPACE;
 namespace js = nlohmann;
@@ -195,10 +196,10 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
 
         // Don't return false. Even if there are parsing errors or warnings,
         // library should be able redirect to the original Kinect10.dll even without Fake Devices
-        if (!create_devices())
-            return true;
+if (!create_devices())
+return true;
     }
-        break;
+    break;
     case DLL_PROCESS_DETACH:
         //cleanup
         if (kinectHndl) FreeLibrary(kinectHndl);
@@ -221,14 +222,17 @@ outcome::result<R> call_nui(const char* name, Args... a)
     typedef R(*func)(Args...);
     auto it = cached_procs.find(name);
     if (it == cached_procs.end())
-        it = cached_procs.emplace(name, GetProcAddress(kinectHndl, name)).first;   
-    //if constexpr( std::is_same<R,void>)
+        it = cached_procs.emplace(name, GetProcAddress(kinectHndl, name)).first;
+    //enable /std:c++17
+    //if constexpr( std::is_same<R,void>::value)
     //{
-    //  reinterpret_cast<func>(it->second)(std::forward<Args...>(a)...);
-    //  return outcome::success();
+    //    reinterpret_cast<func>(it->second)(std::forward<Args...>(a)...);
+    //    return outcome::success();
     //}
     //else
-    return reinterpret_cast<func>(it->second)(std::forward<Args>(a)...);
+    {
+        return reinterpret_cast<func>(it->second)(std::forward<Args>(a)...);
+    }
 }
 
 //---------------------------------------------------------------------
@@ -246,7 +250,7 @@ HRESULT NUIAPI NuiGetSensorCount(
     {
         *pCount = 0;
     }
-    
+
     *pCount += static_cast<int>(g_devices.size());
     return S_OK;
 }
@@ -256,12 +260,16 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
 )
 {
     int pCount;
-    NuiGetSensorCount(&pCount);
-    if (index < pCount)
+    if (const auto r = call_nui<HRESULT>("NuiGetSensorCount", &pCount))
     {
-        auto r = call_nui<HRESULT>("NuiCreateSensorByIndex", index, ppNuiSensor);
-        return (r) ? r.value() : E_NUI_BADINDEX;
+        if (index < pCount)
+        {
+            auto r = call_nui<HRESULT>("NuiCreateSensorByIndex", index, ppNuiSensor);
+            return (r) ? r.value() : E_NUI_BADINDEX;
+        }
     }
+    else
+        pCount = 0;
     index -= pCount;
     if (index >= g_devices.size())
         return E_NUI_BADINDEX;
@@ -275,7 +283,7 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
         return E_OUTOFMEMORY;
 
     auto frames = scene.frames_size();
-    *ppNuiSensor = new INuiSensor_Faker(std::move(scene), g_devices[index]->connectionId, index+pCount);
+    *ppNuiSensor = new INuiSensor_Faker(std::move(scene), g_devices[index]->connectionId, index + pCount);
     return S_OK;
 }
 HRESULT NUIAPI NuiCameraElevationGetAngle(
@@ -291,10 +299,10 @@ HRESULT NUIAPI NuiCameraElevationSetAngle(
     LONG lAngleDegrees
 )
 {
-    g_callLog->trace("{} (lAngleDegrees={})", "NuiCameraElevationSetAngle", lAngleDegrees);
-    typedef HRESULT(*func)(LONG);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiCameraElevationSetAngle");
-    return reinterpret_cast<func>(f)(lAngleDegrees);
+    if (const auto r = call_nui<HRESULT>("NuiCameraElevationSetAngle", lAngleDegrees))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiImageGetColorPixelCoordinatesFromDepthPixel(
@@ -307,10 +315,11 @@ HRESULT NUIAPI NuiImageGetColorPixelCoordinatesFromDepthPixel(
     LONG *plColorY
 )
 {
-    g_callLog->trace("{} (...)", "NuiImageGetColorPixelCoordinatesFromDepthPixel");
-    typedef HRESULT(*func)(NUI_IMAGE_RESOLUTION, const NUI_IMAGE_VIEW_AREA*, LONG, LONG, USHORT, LONG*, LONG*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiImageGetColorPixelCoordinatesFromDepthPixel");
-    return reinterpret_cast<func>(f)(eColorResolution, pcViewArea, lDepthX, lDepthY, usDepthValue, plColorX, plColorY);
+    if (const auto r = call_nui<HRESULT>("NuiImageGetColorPixelCoordinatesFromDepthPixel", 
+        eColorResolution, pcViewArea, lDepthX, lDepthY, usDepthValue, plColorX, plColorY))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
@@ -324,10 +333,11 @@ HRESULT NUIAPI NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
     LONG *plColorY
 )
 {
-    g_callLog->trace("{} (...)", "NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution");
-    typedef HRESULT(*func)(NUI_IMAGE_RESOLUTION, NUI_IMAGE_RESOLUTION, const NUI_IMAGE_VIEW_AREA*, LONG, LONG, USHORT, LONG*, LONG*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution");
-    return reinterpret_cast<func>(f)(eColorResolution, eDepthResolution, pcViewArea, lDepthX, lDepthY, usDepthValue, plColorX, plColorY);
+    if (const auto r = call_nui<HRESULT>("NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution",
+        eColorResolution, eDepthResolution, pcViewArea, lDepthX, lDepthY, usDepthValue, plColorX, plColorY))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiImageStreamGetNextFrame(
@@ -336,10 +346,10 @@ HRESULT NUIAPI NuiImageStreamGetNextFrame(
     const NUI_IMAGE_FRAME **ppcImageFrame
 )
 {
-    g_callLog->trace("{} (...)", "NuiImageStreamGetNextFrame");
-    typedef HRESULT(*func)(HANDLE, DWORD, const NUI_IMAGE_FRAME**);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiImageStreamGetNextFrame");
-    return reinterpret_cast<func>(f)(hStream, dwMillisecondsToWait, ppcImageFrame);
+    if (const auto r = call_nui<HRESULT>("NuiImageStreamGetNextFrame", hStream, dwMillisecondsToWait, ppcImageFrame))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiImageStreamOpen(
@@ -351,10 +361,11 @@ HRESULT NUIAPI NuiImageStreamOpen(
     HANDLE *phStreamHandle
 )
 {
-    g_callLog->trace("{} (...)", "NuiImageStreamOpen");
-    typedef HRESULT(*func)(NUI_IMAGE_TYPE, NUI_IMAGE_RESOLUTION, DWORD, DWORD, HANDLE, HANDLE*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiImageStreamOpen");
-    return reinterpret_cast<func>(f)(eImageType, eResolution, dwImageFrameFlags, dwFrameLimit, hNextFrameEvent, phStreamHandle);
+    if (const auto r = call_nui<HRESULT>("NuiImageStreamOpen",
+        eImageType, eResolution, dwImageFrameFlags, dwFrameLimit, hNextFrameEvent, phStreamHandle))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiImageStreamReleaseFrame(
@@ -362,10 +373,10 @@ HRESULT NUIAPI NuiImageStreamReleaseFrame(
     const NUI_IMAGE_FRAME *pImageFrame
 )
 {
-    g_callLog->trace("{} (...)", "NuiImageStreamReleaseFrame");
-    typedef HRESULT(*func)(HANDLE, const NUI_IMAGE_FRAME*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiImageStreamReleaseFrame");
-    return reinterpret_cast<func>(f)(hStream, pImageFrame);
+    if (const auto r = call_nui<HRESULT>("NuiImageStreamReleaseFrame", hStream, pImageFrame))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiInitialize(
@@ -377,15 +388,11 @@ HRESULT NUIAPI NuiInitialize(
     if (g_singleDevice != nullptr)
     {
         g_log->warn("Single Fake Kinect already initialized.");
-        return E_FAIL;
+        return E_NUI_ALREADY_INITIALIZED;
     }
     int sensors;
     NuiGetSensorCount(&sensors);
     return NuiCreateSensorByIndex(sensors, reinterpret_cast<INuiSensor**>(&g_singleDevice)); //create from first in kinect list
-
-    //typedef HRESULT(*func)(DWORD);
-    //static FARPROC f = GetProcAddress(kinectHndl, "NuiInitialize");
-    //return reinterpret_cast<func>(f)(dwFlags);
 }
 
 HRESULT NUIAPI NuiSetFrameEndEvent(
@@ -393,10 +400,10 @@ HRESULT NUIAPI NuiSetFrameEndEvent(
     DWORD dwFrameEventFlag
 )
 {
-    g_callLog->trace("{} (...)", "NuiSetFrameEndEvent");
-    typedef HRESULT(*func)(HANDLE, DWORD);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiSetFrameEndEvent");
-    return reinterpret_cast<func>(f)(hEvent, dwFrameEventFlag);
+    if (const auto r = call_nui<HRESULT>("NuiSetFrameEndEvent", hEvent, dwFrameEventFlag))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 void NUIAPI NuiShutdown()
@@ -407,14 +414,9 @@ void NUIAPI NuiShutdown()
     {
         g_singleDevice->Release();
         g_singleDevice = nullptr;
-        return;
     }
     //else
     //    call_nui<void>("NuiShutdown");
-
-    /*typedef void(*func)();
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiShutdown");
-    reinterpret_cast<func>(f)();*/
 }
 
 HRESULT NUIAPI NuiSkeletonGetNextFrame(
@@ -427,15 +429,10 @@ HRESULT NUIAPI NuiSkeletonGetNextFrame(
     if (!g_singleDevice)
     {
         g_log->trace("Cannot call {}. Device not initialized.", "NuiSkeletonGetNextFrame");
-        return E_FAIL;
+        return E_NUI_NOTCONNECTED;
     }
 
     return g_singleDevice->NuiSkeletonGetNextFrame(dwMillisecondsToWait,pSkeletonFrame);
-
-/*
-    typedef HRESULT(*func)(DWORD, NUI_SKELETON_FRAME*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiSkeletonGetNextFrame");
-    return reinterpret_cast<func>(f)(dwMillisecondsToWait, pSkeletonFrame);*/
 }
 
 HRESULT NUIAPI NuiSkeletonTrackingDisable()
@@ -445,15 +442,10 @@ HRESULT NUIAPI NuiSkeletonTrackingDisable()
     if (!g_singleDevice)
     {
         g_log->trace("Cannot call {}. Device not initialized.", "NuiSkeletonTrackingDisable");
-        return E_FAIL;
+        return E_NUI_DEVICE_NOT_CONNECTED;
     }
 
     return g_singleDevice->NuiSkeletonTrackingDisable();
-
-/*
-    typedef HRESULT(*func)();
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiSkeletonTrackingDisable");
-    return reinterpret_cast<func>(f)();*/
 }
 
 HRESULT NUIAPI NuiSkeletonTrackingEnable(
@@ -465,14 +457,10 @@ HRESULT NUIAPI NuiSkeletonTrackingEnable(
     if (!g_singleDevice)
     {
         g_log->trace("Cannot call {}. Device not initialized.","NuiSkeletonTrackingEnable");
-        return E_FAIL;
+        return E_NUI_DEVICE_NOT_CONNECTED;
     }
 
     return g_singleDevice->NuiSkeletonTrackingEnable(hNextFrameEvent, dwFlags);
-
-    /*typedef HRESULT(*func)(HANDLE, DWORD);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiSkeletonTrackingEnable");
-    return reinterpret_cast<func>(f)(hNextFrameEvent, dwFlags);*/
 }
 
 HRESULT NUIAPI NuiTransformSmooth(
@@ -484,15 +472,10 @@ HRESULT NUIAPI NuiTransformSmooth(
     if (!g_singleDevice)
     {
         g_log->trace("Cannot call {}. Device not initialized.", "NuiTransformSmooth");
-        return E_FAIL;
+        return E_NUI_DEVICE_NOT_CONNECTED;
     }
 
     return g_singleDevice->NuiTransformSmooth(pSkeletonFrame, pSmoothingParams);
-
-    /*
-    typedef HRESULT(*func)(NUI_SKELETON_FRAME*, const NUI_TRANSFORM_SMOOTH_PARAMETERS*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiTransformSmooth");
-    return reinterpret_cast<func>(f)(pSkeletonFrame, pSmoothingParams);*/
 }
 
 HRESULT NUIAPI NuiCreateSensorById(
@@ -527,10 +510,10 @@ HRESULT NUIAPI NuiCreateSensorById(
         }
     }
     //else if nothing was found
-
-    typedef HRESULT(*func)(const OLECHAR*, INuiSensor**);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiCreateSensorById");
-    return reinterpret_cast<func>(f)(strInstanceId, ppNuiSensor);
+    if (const auto r = call_nui<HRESULT>("NuiCreateSensorById", strInstanceId, ppNuiSensor))
+        return r.value();
+    else
+        return E_NUI_BADINDEX;
 }
 
 void NUIAPI NuiSetDeviceStatusCallback(
@@ -538,10 +521,10 @@ void NUIAPI NuiSetDeviceStatusCallback(
     void *pUserData
 )
 {
-    g_callLog->trace("{} (...)", "NuiSetDeviceStatusCallback");
-    typedef void(*func)(NuiStatusProc, void*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiSetDeviceStatusCallback");
-    reinterpret_cast<func>(f)(callback, pUserData);
+    if (const auto r = call_nui<HRESULT>("NuiSetDeviceStatusCallback", callback, pUserData))
+        return;
+    else
+        return g_log->warn("Cannot set Callback. Not implemented and Kinect runtime not present.");
 }
 
 HRESULT NUIAPI NuiImageStreamSetImageFrameFlags(
@@ -549,10 +532,10 @@ HRESULT NUIAPI NuiImageStreamSetImageFrameFlags(
     DWORD dwImageFrameFlags
 )
 {
-    g_callLog->trace("{} (dwImageFrameFlags={})", "NuiImageStreamSetImageFrameFlags", dwImageFrameFlags);
-    typedef HRESULT(*func)(HANDLE, DWORD);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiImageStreamSetImageFrameFlags");
-    return reinterpret_cast<func>(f)(hStream, dwImageFrameFlags);
+    if (const auto r = call_nui<HRESULT>("NuiImageStreamSetImageFrameFlags", hStream, dwImageFrameFlags))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiImageStreamGetImageFrameFlags(
@@ -560,30 +543,30 @@ HRESULT NUIAPI NuiImageStreamGetImageFrameFlags(
     DWORD *pdwImageFrameFlags
 )
 {
-    g_callLog->trace("{} (...)", "NuiImageStreamGetImageFrameFlags");
-    typedef HRESULT(*func)(HANDLE, DWORD*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiImageStreamGetImageFrameFlags");
-    return reinterpret_cast<func>(f)(hStream, pdwImageFrameFlags);
+    if (const auto r = call_nui<HRESULT>("NuiImageStreamGetImageFrameFlags", hStream, pdwImageFrameFlags))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiGetAudioSource(
     INuiAudioBeam **ppDmo
 )
 {
-    g_callLog->trace("{} (...)", "NuiGetAudioSource");
-    typedef HRESULT(*func)(INuiAudioBeam**);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiGetAudioSource");
-    return reinterpret_cast<func>(f)(ppDmo);
+    if (const auto r = call_nui<HRESULT>("NuiGetAudioSource", ppDmo))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiSkeletonSetTrackedSkeletons(
     DWORD TrackingIDs[NUI_SKELETON_MAX_TRACKED_COUNT]
 )
 {
-    g_callLog->trace("{} (...)", "NuiSkeletonSetTrackedSkeletons");
-    typedef HRESULT(*func)(DWORD[NUI_SKELETON_MAX_TRACKED_COUNT]);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiSkeletonSetTrackedSkeletons");
-    return reinterpret_cast<func>(f)(TrackingIDs);
+    if (const auto r = call_nui<HRESULT>("NuiSkeletonSetTrackedSkeletons", TrackingIDs))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT __stdcall NuiSkeletonCalculateBoneOrientations(
@@ -591,10 +574,10 @@ HRESULT __stdcall NuiSkeletonCalculateBoneOrientations(
     NUI_SKELETON_BONE_ORIENTATION *pBoneOrientations
 )
 {
-    g_callLog->trace("{} (...)", "NuiSkeletonCalculateBoneOrientations");
-    typedef HRESULT(*func)(const NUI_SKELETON_DATA*, NUI_SKELETON_BONE_ORIENTATION*);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiSkeletonCalculateBoneOrientations");
-    return reinterpret_cast<func>(f)(pSkeletonData, pBoneOrientations);
+    if (const auto r = call_nui<HRESULT>("NuiSkeletonCalculateBoneOrientations", pSkeletonData, pBoneOrientations))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiCreateCoordinateMapperFromParameters(
@@ -603,10 +586,10 @@ HRESULT NUIAPI NuiCreateCoordinateMapperFromParameters(
     INuiCoordinateMapper **ppCoordinateMapper
 )
 {
-    g_callLog->trace("{} (...)", "NuiCreateCoordinateMapperFromParameters");
-    typedef HRESULT(*func)(ULONG, void*, INuiCoordinateMapper**);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiCreateCoordinateMapperFromParameters");
-    return reinterpret_cast<func>(f)(dataByteCount, pData, ppCoordinateMapper);
+    if (const auto r = call_nui<HRESULT>("NuiCreateCoordinateMapperFromParameters", dataByteCount, pData, ppCoordinateMapper))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }
 
 HRESULT NUIAPI NuiCreateDepthFilter(
@@ -615,8 +598,8 @@ HRESULT NUIAPI NuiCreateDepthFilter(
     INuiDepthFilter **ppDepthFilter
 )
 {
-    g_callLog->trace("{} (...)", "NuiCreateDepthFilter");
-    typedef HRESULT(*func)(LPCWSTR, LPCSTR, INuiDepthFilter**);
-    static FARPROC f = GetProcAddress(kinectHndl, "NuiCreateDepthFilter");
-    return reinterpret_cast<func>(f)(filename, factoryEntryPoint, ppDepthFilter);
+    if (const auto r = call_nui<HRESULT>("NuiCreateDepthFilter", filename, factoryEntryPoint, ppDepthFilter))
+        return r.value();
+    else
+        return E_NOTIMPL;
 }

@@ -8,7 +8,7 @@ platform:
     - x64
 environment:
     matrix:
-        - Toolset: v140
+    #    - Toolset: v140
         - Toolset: v150
 install:
     - git submodule init
@@ -63,3 +63,10 @@ before_build:
     cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DUSE_CONAN=ON -DBUILD_TESTS=OFF ..
 build_script:
     - ps: cmake --build . --config $env:CONFIGURATION
+    
+test_script:
+- ps: |
+    ctest -C $env:CONFIGURATION --output-on-failure
+    if ($LastExitCode -ne 0) {
+        throw "Exec: $ErrorMessage"
+    }
