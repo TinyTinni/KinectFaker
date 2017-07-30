@@ -5,14 +5,14 @@
 #include <NuiApi.h>
 
 #include <fstream> //fstream
-#include <utility> //move
+#include <utility> //move, foward
 #include <vector>
 #include <memory>
 #include <string>
 #include <functional> //connection id
 
 #include <locale> //convert wchar_t to char in NuiGetSensorById
-#include <codecvt> //^^
+#include <codecvt> //as above
 
 #include <tchar.h> //_T
 #include <comutil.h> //convert from BSTR to _bstr_t
