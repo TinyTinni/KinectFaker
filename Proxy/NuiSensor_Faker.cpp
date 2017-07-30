@@ -195,7 +195,7 @@ HRESULT INuiSensor_Faker::NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NU
         const auto& data = frame.skeleton_data(i);
         cur->eTrackingState = (NUI_SKELETON_TRACKING_STATE)data.etrackingstate();
         if (cur->eTrackingState == NUI_SKELETON_NOT_TRACKED)
-            return S_OK;
+            continue;
         cur->dwTrackingID = data.dwtrackingid();
         cur->dwEnrollmentIndex = data.dwenrollmentindex();
         cur->dwUserIndex = data.dwuserindex();
@@ -219,7 +219,7 @@ HRESULT INuiSensor_Faker::NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NU
 
 HRESULT INuiSensor_Faker::NuiTransformSmooth(NUI_SKELETON_FRAME * pSkeletonFrame, const NUI_TRANSFORM_SMOOTH_PARAMETERS * pSmoothingParams)
 {
-    return S_OK;//::NuiTransformSmooth(pSkeletonFrame, pSmoothingParams);
+    return S_OK;
 }
 
 HRESULT INuiSensor_Faker::NuiGetAudioSource(INuiAudioBeam ** ppDmo)
