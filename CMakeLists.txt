@@ -5,7 +5,7 @@ project( KinectFaker )
 option(USE_CONAN OFF)
 option(BUILD_GUI "Build GUI" ON)	
 option(BUILD_TESTS "Build Tests" ON)
-option(OUTCOME_UTILITY "Use outcome utilities" OFF)
+option(OUTCOME_UTILITY "Use outcome utilities" OFF)#disables the doxygen warning when including outcome. Bad for the build system
 
 if (USE_CONAN)
     # Initialize Conan #############################################################

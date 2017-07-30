@@ -81,7 +81,7 @@ PRIVATE
     ${CMAKE_BINARY_DIR} # for proto
     ${JSON_INCLUDE_DIR}
     ${SPDLOG_INCLUDE_DIR}
-    "${CMAKE_SOURCE_DIR}/outcome/include"
+    "${CMAKE_SOURCE_DIR}/outcome/single-header"
     )
 set(OUTCOME "")
 if (OUTCOME_UTILITY)
