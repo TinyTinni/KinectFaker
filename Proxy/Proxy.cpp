@@ -241,7 +241,7 @@ HRESULT NUIAPI NuiGetSensorCount(
     int *pCount
 )
 {
-    if (auto r = call_nui<HRESULT>("NuiGetSensorCount", pCount))
+    if (const auto r = call_nui<HRESULT>("NuiGetSensorCount", pCount))
     {
         if (FAILED(r.value()))
             return r.value();

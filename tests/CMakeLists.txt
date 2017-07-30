@@ -48,6 +48,7 @@ enable_testing()
 add_executable( tests "${SOURCES}" )
 add_test(NAME skeleton_position
     COMMAND tests -b
+    WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>
     )
 target_include_directories(tests 
 PUBLIC 
