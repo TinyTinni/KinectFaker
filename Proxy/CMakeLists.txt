@@ -83,11 +83,16 @@ PRIVATE
     ${SPDLOG_INCLUDE_DIR}
     "${CMAKE_SOURCE_DIR}/outcome/include"
     )
+set(OUTCOME "")
+if (OUTCOME_UTILITY)
+    set(OUTCOME outcome::hl)
+endif()
+    
 target_link_libraries(Kinect10
 PUBLIC
     protobuf_def   
     debug comsuppwd.lib optimized comsuppw.lib #comsupport for _bstr_t
-    outcome::hl
+    ${OUTCOME}
     )
     
 target_compile_definitions(Kinect10

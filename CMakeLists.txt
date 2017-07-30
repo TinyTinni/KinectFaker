@@ -3,8 +3,9 @@ set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} 
 project( KinectFaker )
 
 option(USE_CONAN OFF)
-option (BUILD_GUI "Build GUI" ON)	
-option (BUILD_TESTS "Build Tests" ON)
+option(BUILD_GUI "Build GUI" ON)	
+option(BUILD_TESTS "Build Tests" ON)
+option(OUTCOME_UTILITY "Use outcome utilities" OFF)
 
 if (USE_CONAN)
     # Initialize Conan #############################################################
@@ -13,11 +14,13 @@ if (USE_CONAN)
 endif()
 
 # adding outcome
-add_subdirectory(
-  "${CMAKE_CURRENT_SOURCE_DIR}/outcome"  # path to outcome source
-  "${CMAKE_CURRENT_BINARY_DIR}/outcome"  # your choice of where to put binaries
-  EXCLUDE_FROM_ALL                       # please only lazy build outcome on demand
-)
+if (OUTCOME_UTILITY)
+    add_subdirectory(
+        "${CMAKE_CURRENT_SOURCE_DIR}/outcome"  # path to outcome source
+        "${CMAKE_CURRENT_BINARY_DIR}/outcome"  # your choice of where to put binaries
+        EXCLUDE_FROM_ALL                       # please only lazy build outcome on demand
+    )
+endif()
 
 # Find Protobuf
 find_package( Protobuf REQUIRED )
