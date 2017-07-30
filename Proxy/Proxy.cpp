@@ -9,7 +9,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <functional> //connection id
+#include <functional> // invoke
 
 #include <locale> //convert wchar_t to char in NuiGetSensorById
 #include <codecvt> //as above
@@ -69,7 +69,7 @@ bool create_devices()
     try
     {
         g_log->trace("Read configuration file {}", strFile);
-        config << file; // throws std::exceptions on parse error
+        file >> config;// throws std::exceptions on parse error
 
         const auto config_end = config.end();
 
@@ -235,6 +235,17 @@ outcome::result<R> call_nui(const char* name, Args... a)
     }
 }
 
+template<typename R, typename funcT, typename... Args>
+R call_device(const char* name, funcT f, Args... a)
+{
+    g_callLog->trace("{} (...)", name);
+    if (!g_singleDevice)
+        return E_NUI_DEVICE_NOT_CONNECTED;
+    return std::invoke(f, g_singleDevice, std::forward<Args>(a)...);
+}
+
+#define CALL_DEVICE_H(X, ...) call_device<HRESULT>(#X, &INuiSensor_Faker:: ## X, __VA_ARGS__)
+
 //---------------------------------------------------------------------
 
 HRESULT NUIAPI NuiGetSensorCount(
@@ -271,7 +282,7 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
     else
         pCount = 0;
     index -= pCount;
-    if (index >= g_devices.size())
+    if (index >= static_cast<int>(g_devices.size()))
         return E_NUI_BADINDEX;
 
     std::ifstream scene_file(g_devices[index]->filename, std::ios::binary);
@@ -290,19 +301,14 @@ HRESULT NUIAPI NuiCameraElevationGetAngle(
     LONG *plAngleDegrees
 )
 {
-    g_callLog->trace("{} (...)", "NuiCameraElevationGetAngle");
-    auto r = call_nui<HRESULT>("NuiCameraElevationGetAngle", plAngleDegrees);
-    return (r) ? r.value() : E_NOTIMPL;
+    return CALL_DEVICE_H(NuiCameraElevationGetAngle, plAngleDegrees);
 }
 
 HRESULT NUIAPI NuiCameraElevationSetAngle(
     LONG lAngleDegrees
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiCameraElevationSetAngle", lAngleDegrees))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiCameraElevationSetAngle, lAngleDegrees);
 }
 
 HRESULT NUIAPI NuiImageGetColorPixelCoordinatesFromDepthPixel(
@@ -315,11 +321,7 @@ HRESULT NUIAPI NuiImageGetColorPixelCoordinatesFromDepthPixel(
     LONG *plColorY
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiImageGetColorPixelCoordinatesFromDepthPixel", 
-        eColorResolution, pcViewArea, lDepthX, lDepthY, usDepthValue, plColorX, plColorY))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiImageGetColorPixelCoordinatesFromDepthPixel, eColorResolution, pcViewArea, lDepthX, lDepthY, usDepthValue, plColorX, plColorY);
 }
 
 HRESULT NUIAPI NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
@@ -333,11 +335,7 @@ HRESULT NUIAPI NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
     LONG *plColorY
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution",
-        eColorResolution, eDepthResolution, pcViewArea, lDepthX, lDepthY, usDepthValue, plColorX, plColorY))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution, eColorResolution, eDepthResolution, pcViewArea, lDepthX, lDepthY, usDepthValue, plColorX, plColorY);
 }
 
 HRESULT NUIAPI NuiImageStreamGetNextFrame(
@@ -346,10 +344,7 @@ HRESULT NUIAPI NuiImageStreamGetNextFrame(
     const NUI_IMAGE_FRAME **ppcImageFrame
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiImageStreamGetNextFrame", hStream, dwMillisecondsToWait, ppcImageFrame))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiImageStreamGetNextFrame, hStream, dwMillisecondsToWait, const_cast<NUI_IMAGE_FRAME*>(*ppcImageFrame));
 }
 
 HRESULT NUIAPI NuiImageStreamOpen(
@@ -361,11 +356,8 @@ HRESULT NUIAPI NuiImageStreamOpen(
     HANDLE *phStreamHandle
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiImageStreamOpen",
-        eImageType, eResolution, dwImageFrameFlags, dwFrameLimit, hNextFrameEvent, phStreamHandle))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiImageStreamOpen,
+        eImageType, eResolution, dwImageFrameFlags, dwFrameLimit, hNextFrameEvent, phStreamHandle);
 }
 
 HRESULT NUIAPI NuiImageStreamReleaseFrame(
@@ -373,10 +365,8 @@ HRESULT NUIAPI NuiImageStreamReleaseFrame(
     const NUI_IMAGE_FRAME *pImageFrame
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiImageStreamReleaseFrame", hStream, pImageFrame))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiImageStreamReleaseFrame, hStream, const_cast<NUI_IMAGE_FRAME*>(pImageFrame));
+
 }
 
 HRESULT NUIAPI NuiInitialize(
@@ -384,7 +374,6 @@ HRESULT NUIAPI NuiInitialize(
 )
 {
     g_callLog->trace("{} (dwFlags={})", "NuiInitialize", dwFlags);
-
     if (g_singleDevice != nullptr)
     {
         g_log->warn("Single Fake Kinect already initialized.");
@@ -392,7 +381,7 @@ HRESULT NUIAPI NuiInitialize(
     }
     int sensors;
     NuiGetSensorCount(&sensors);
-    return NuiCreateSensorByIndex(sensors, reinterpret_cast<INuiSensor**>(&g_singleDevice)); //create from first in kinect list
+    return NuiCreateSensorByIndex(sensors-1, reinterpret_cast<INuiSensor**>(&g_singleDevice)); //create from first in kinect list
 }
 
 HRESULT NUIAPI NuiSetFrameEndEvent(
@@ -400,23 +389,18 @@ HRESULT NUIAPI NuiSetFrameEndEvent(
     DWORD dwFrameEventFlag
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiSetFrameEndEvent", hEvent, dwFrameEventFlag))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiSetFrameEndEvent, hEvent, dwFrameEventFlag);
 }
 
 void NUIAPI NuiShutdown()
 {
     g_callLog->trace("{} called", "NuiShutdown");
-
     if (g_singleDevice)
     {
+        g_singleDevice->NuiShutdown();
         g_singleDevice->Release();
         g_singleDevice = nullptr;
     }
-    //else
-    //    call_nui<void>("NuiShutdown");
 }
 
 HRESULT NUIAPI NuiSkeletonGetNextFrame(
@@ -424,28 +408,12 @@ HRESULT NUIAPI NuiSkeletonGetNextFrame(
     NUI_SKELETON_FRAME *pSkeletonFrame
 )
 {
-    g_callLog->trace("{} (...)", "NuiSkeletonGetNextFrame");
-
-    if (!g_singleDevice)
-    {
-        g_log->trace("Cannot call {}. Device not initialized.", "NuiSkeletonGetNextFrame");
-        return E_NUI_NOTCONNECTED;
-    }
-
-    return g_singleDevice->NuiSkeletonGetNextFrame(dwMillisecondsToWait,pSkeletonFrame);
+    return CALL_DEVICE_H(NuiSkeletonGetNextFrame, dwMillisecondsToWait, pSkeletonFrame);
 }
 
 HRESULT NUIAPI NuiSkeletonTrackingDisable()
 {
-    g_callLog->trace("{} ()", "NuiSkeletonTrackingDisable");
-
-    if (!g_singleDevice)
-    {
-        g_log->trace("Cannot call {}. Device not initialized.", "NuiSkeletonTrackingDisable");
-        return E_NUI_DEVICE_NOT_CONNECTED;
-    }
-
-    return g_singleDevice->NuiSkeletonTrackingDisable();
+    return CALL_DEVICE_H(NuiSkeletonTrackingDisable);
 }
 
 HRESULT NUIAPI NuiSkeletonTrackingEnable(
@@ -453,14 +421,7 @@ HRESULT NUIAPI NuiSkeletonTrackingEnable(
     DWORD dwFlags
 )
 {
-    g_callLog->trace("{} (dwFlags={})", "NuiSkeletonTrackingEnable", dwFlags);
-    if (!g_singleDevice)
-    {
-        g_log->trace("Cannot call {}. Device not initialized.","NuiSkeletonTrackingEnable");
-        return E_NUI_DEVICE_NOT_CONNECTED;
-    }
-
-    return g_singleDevice->NuiSkeletonTrackingEnable(hNextFrameEvent, dwFlags);
+    return CALL_DEVICE_H(NuiSkeletonTrackingEnable, hNextFrameEvent, dwFlags);
 }
 
 HRESULT NUIAPI NuiTransformSmooth(
@@ -468,14 +429,7 @@ HRESULT NUIAPI NuiTransformSmooth(
     const NUI_TRANSFORM_SMOOTH_PARAMETERS *pSmoothingParams
 )
 {
-    g_callLog->trace("{} (...)", "NuiTransformSmooth");
-    if (!g_singleDevice)
-    {
-        g_log->trace("Cannot call {}. Device not initialized.", "NuiTransformSmooth");
-        return E_NUI_DEVICE_NOT_CONNECTED;
-    }
-
-    return g_singleDevice->NuiTransformSmooth(pSkeletonFrame, pSmoothingParams);
+    return CALL_DEVICE_H(NuiTransformSmooth, pSkeletonFrame, pSmoothingParams);
 }
 
 HRESULT NUIAPI NuiCreateSensorById(
@@ -488,7 +442,7 @@ HRESULT NUIAPI NuiCreateSensorById(
     g_callLog->trace("{} (strInstanceId={})", "NuiCreateSensorById", instId);
     // search for sensor with the given id
     _bstr_t instance_id = strInstanceId;
-    for (int i = 0; i < g_devices.size(); ++i)
+    for (size_t i = 0; i < g_devices.size(); ++i)
     {
         const auto d = g_devices[i].get();
         int num_devices;
@@ -505,7 +459,7 @@ HRESULT NUIAPI NuiCreateSensorById(
 
             auto frames = scene.frames_size();
 
-            *ppNuiSensor = new INuiSensor_Faker(std::move(scene), d->connectionId, num_devices+i);
+            *ppNuiSensor = new INuiSensor_Faker(std::move(scene), d->connectionId, num_devices+static_cast<int>(i));
             return S_OK;
         }
     }
@@ -532,10 +486,7 @@ HRESULT NUIAPI NuiImageStreamSetImageFrameFlags(
     DWORD dwImageFrameFlags
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiImageStreamSetImageFrameFlags", hStream, dwImageFrameFlags))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiImageStreamSetImageFrameFlags, hStream, dwImageFrameFlags);
 }
 
 HRESULT NUIAPI NuiImageStreamGetImageFrameFlags(
@@ -543,30 +494,21 @@ HRESULT NUIAPI NuiImageStreamGetImageFrameFlags(
     DWORD *pdwImageFrameFlags
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiImageStreamGetImageFrameFlags", hStream, pdwImageFrameFlags))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiImageStreamGetImageFrameFlags, hStream, pdwImageFrameFlags);
 }
 
 HRESULT NUIAPI NuiGetAudioSource(
     INuiAudioBeam **ppDmo
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiGetAudioSource", ppDmo))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiGetAudioSource, ppDmo);
 }
 
 HRESULT NUIAPI NuiSkeletonSetTrackedSkeletons(
     DWORD TrackingIDs[NUI_SKELETON_MAX_TRACKED_COUNT]
 )
 {
-    if (const auto r = call_nui<HRESULT>("NuiSkeletonSetTrackedSkeletons", TrackingIDs))
-        return r.value();
-    else
-        return E_NOTIMPL;
+    return CALL_DEVICE_H(NuiSkeletonSetTrackedSkeletons, TrackingIDs);
 }
 
 HRESULT __stdcall NuiSkeletonCalculateBoneOrientations(
