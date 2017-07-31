@@ -60,7 +60,7 @@ before_build:
     cmake --version
     md build -Force | Out-Null
     cd build 
-    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DUSE_CONAN=ON -DBUILD_TESTS=ON ..
+    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DUSE_CONAN=ON -DBUILD_TESTS=ON -DCMAKE_CXX_FLAGS_DEBUG=MTd -DCMAKE_CXX_FLAGS_RELEASE=MT ..
 build_script:
     - ps: cmake --build . --config $env:CONFIGURATION
     
