@@ -15,6 +15,8 @@ class RecorderKinect
     HANDLE m_hNextSkeletonEvent;
     bool m_isOn;
 
+    NUI_TRANSFORM_SMOOTH_PARAMETERS* m_smooth_parameters;
+
     std::function<void(const NUI_SKELETON_FRAME& skd)> m_newPointCb;
 
 public:
@@ -25,6 +27,9 @@ public:
     bool event_next_frame_fired();
 
     INuiSensor* get_raw_device() { return m_device; }
+
+    void enable_smoothing(NUI_TRANSFORM_SMOOTH_PARAMETERS* p) { m_smooth_parameters = p; }
+    void disable_smoothing() { m_smooth_parameters = nullptr; }
 
     RecorderKinect();
     RecorderKinect(HANDLE skeletonEventHandle);

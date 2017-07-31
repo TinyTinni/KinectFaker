@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1025</width>
-    <height>608</height>
+    <height>687</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -123,6 +123,170 @@
         <string>Record</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
+        <item row="0" column="3">
+         <widget class="QGroupBox" name="groupBox_3">
+          <property name="title">
+           <string>Skeleton Options</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_7">
+           <item row="0" column="0">
+            <widget class="QGroupBox" name="groupBox_5">
+             <property name="title">
+              <string>Joint Smoothing</string>
+             </property>
+             <layout class="QFormLayout" name="formLayout">
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>Smoothing:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>Correction:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Prediction:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>JitterRadius:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>MaxDeviationRadius:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QDoubleSpinBox" name="spSmoothing">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="suffix">
+                 <string>m</string>
+                </property>
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="maximum">
+                 <double>1.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.010000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.500000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="spCorrection">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="suffix">
+                 <string>m</string>
+                </property>
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="maximum">
+                 <double>1.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.010000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.500000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QDoubleSpinBox" name="spPrediction">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="singleStep">
+                 <double>0.010000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QDoubleSpinBox" name="spJitter">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="prefix">
+                 <string/>
+                </property>
+                <property name="suffix">
+                 <string>m</string>
+                </property>
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="singleStep">
+                 <double>0.010000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.050000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QDoubleSpinBox" name="spMaxDev">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="suffix">
+                 <string>m</string>
+                </property>
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="singleStep">
+                 <double>0.010000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.040000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="cbEnableSmoothing">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Enable</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
         <item row="0" column="0">
          <widget class="QGroupBox" name="groupBox_4">
           <property name="layoutDirection">
@@ -139,10 +303,13 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="leColorOut">
-             <property name="enabled">
-              <bool>false</bool>
+           <item row="2" column="0">
+            <widget class="QCheckBox" name="cbCaptureSkeleton">
+             <property name="text">
+              <string>Skeleton</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -166,13 +333,10 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QCheckBox" name="cbCaptureSkeleton">
-             <property name="text">
-              <string>Skeleton</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="leColorOut">
+             <property name="enabled">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -255,37 +419,24 @@
              </property>
             </widget>
            </item>
+           <item row="3" column="1">
+            <widget class="QPushButton" name="pbRecord">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string>Record</string>
+             </property>
+             <property name="icon">
+              <iconset>
+               <normaloff>icons/record.png</normaloff>icons/record.png</iconset>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
           </layout>
-         </widget>
-        </item>
-        <item row="0" column="3">
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="0" column="1">
-         <widget class="QPushButton" name="pbRecord">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="text">
-           <string>Record</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../../../../../../.designer/backup/icons/record.png</normaloff>../../../../../../.designer/backup/icons/record.png</iconset>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
          </widget>
         </item>
         <item row="0" column="2">
@@ -477,11 +628,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>111</x>
-     <y>499</y>
+     <y>526</y>
     </hint>
     <hint type="destinationlabel">
-     <x>140</x>
-     <y>499</y>
+     <x>248</x>
+     <y>527</y>
     </hint>
    </hints>
   </connection>
@@ -492,12 +643,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>69</x>
-     <y>531</y>
+     <x>94</x>
+     <y>589</y>
     </hint>
     <hint type="destinationlabel">
-     <x>138</x>
-     <y>528</y>
+     <x>246</x>
+     <y>590</y>
     </hint>
    </hints>
   </connection>
@@ -508,12 +659,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>78</x>
-     <y>531</y>
+     <x>103</x>
+     <y>589</y>
     </hint>
     <hint type="destinationlabel">
-     <x>279</x>
-     <y>529</y>
+     <x>287</x>
+     <y>592</y>
     </hint>
    </hints>
   </connection>
@@ -524,12 +675,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>90</x>
-     <y>497</y>
+     <x>111</x>
+     <y>526</y>
     </hint>
     <hint type="destinationlabel">
-     <x>273</x>
-     <y>494</y>
+     <x>287</x>
+     <y>529</y>
     </hint>
    </hints>
   </connection>
@@ -540,12 +691,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>86</x>
-     <y>468</y>
+     <x>111</x>
+     <y>463</y>
     </hint>
     <hint type="destinationlabel">
-     <x>137</x>
-     <y>466</y>
+     <x>245</x>
+     <y>464</y>
     </hint>
    </hints>
   </connection>
@@ -556,12 +707,92 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>94</x>
-     <y>465</y>
+     <x>111</x>
+     <y>463</y>
     </hint>
     <hint type="destinationlabel">
-     <x>284</x>
-     <y>469</y>
+     <x>287</x>
+     <y>466</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbEnableSmoothing</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>spSmoothing</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>748</x>
+     <y>445</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>881</x>
+     <y>491</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbEnableSmoothing</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>spCorrection</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>770</x>
+     <y>450</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>892</x>
+     <y>517</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbEnableSmoothing</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>spPrediction</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>756</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>883</x>
+     <y>545</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbEnableSmoothing</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>spJitter</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>764</x>
+     <y>444</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>867</x>
+     <y>569</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cbEnableSmoothing</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>spMaxDev</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>743</x>
+     <y>454</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>872</x>
+     <y>604</y>
     </hint>
    </hints>
   </connection>

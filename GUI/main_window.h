@@ -34,4 +34,5 @@ private:
     std::unique_ptr<RecorderKinect> m_kinect = nullptr;
 
     QWinEventNotifier m_skeletonEvent;
+    NUI_TRANSFORM_SMOOTH_PARAMETERS m_smoothParams;
 };

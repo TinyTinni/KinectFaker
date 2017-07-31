@@ -71,6 +71,7 @@ TEST_CASE("get skeleton frame", "[skeleton]")
         REQUIRE(WaitForSingleObject(nextFrameEvent, 33) == WAIT_OBJECT_0);
         NUI_SKELETON_FRAME frame;
         REQUIRE(SUCCEEDED(device->NuiSkeletonGetNextFrame(0, &frame)));
+        REQUIRE(SUCCEEDED(device->NuiTransformSmooth(&frame, NULL)));
         int tracked_skeletons = 0;
         for (size_t j = 0; j < NUI_SKELETON_COUNT; ++j)
         {

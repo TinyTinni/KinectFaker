@@ -53,6 +53,18 @@ main_window::main_window(QObject * parent)
     connect(ui.hsFrames, &QSlider::valueChanged, this, &main_window::show_skeleton);
     connect(ui.pbPlaySkeletonPath, &QPushButton::clicked, [&selectFileFn, this]() {selectFileFn(ui.leSkeletonIn); });
 
+
+    ////////////////// Skeleton Config ////////////////////////////
+    connect(ui.spSmoothing, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+        [this](double v) {this->m_smoothParams.fSmoothing = v; });
+    connect(ui.spCorrection, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+        [this](double v) {this->m_smoothParams.fCorrection = v; });
+    connect(ui.spPrediction, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+        [this](double v) {this->m_smoothParams.fPrediction = v; });
+    connect(ui.spJitter, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+        [this](double v) {this->m_smoothParams.fJitterRadius = v; });
+    connect(ui.spMaxDev, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+        [this](double v) {this->m_smoothParams.fMaxDeviationRadius = v; });
 }
 
 main_window::~main_window()
@@ -117,6 +129,11 @@ void main_window::start_record(bool checked)
         ui.leConnectionId->setText(QString::fromWCharArray(connectionid));
         ui.pbGenerateConfig->setEnabled(true);
     }
+
+    if (ui.cbEnableSmoothing->isChecked()) //todo
+        m_kinect->enable_smoothing(&m_smoothParams);
+    else
+        m_kinect->disable_smoothing();
 
     const auto recordSkeletonFn = [this](const NUI_SKELETON_DATA& skd, kif::SkeletonData* data) 
     {

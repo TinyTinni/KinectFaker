@@ -46,7 +46,7 @@ set (SOURCES
 
 enable_testing()	
 add_executable( tests "${SOURCES}" )
-add_test(NAME skeleton_position
+add_test(NAME basic_functionality
     COMMAND tests -b
     WORKING_DIRECTORY $<TARGET_FILE_DIR:tests>
     )

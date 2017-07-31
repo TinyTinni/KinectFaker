@@ -5,6 +5,8 @@
 #include <NuiSkeleton.h>
 #include <NuiApi.h>
 
+#include <utility>
+
 bool RecorderKinect::get_skeleton_position()
 {
     if (WAIT_OBJECT_0 != WaitForSingleObject(m_hNextSkeletonEvent, 0))
@@ -18,7 +20,8 @@ bool RecorderKinect::event_next_frame_fired()
     NUI_SKELETON_FRAME skeletonFrame = { 0 };
     HRESULT hr = m_device->NuiSkeletonGetNextFrame(0, &skeletonFrame);
 
-    m_device->NuiTransformSmooth(&skeletonFrame, NULL);
+    if (m_smooth_parameters)
+        m_device->NuiTransformSmooth(&skeletonFrame, m_smooth_parameters);
 
     m_newPointCb(skeletonFrame);
 
@@ -85,7 +88,7 @@ void RecorderKinect::enable()
 
 }
 
-RecorderKinect::RecorderKinect() : 
+RecorderKinect::RecorderKinect() :
     RecorderKinect(CreateEventW(NULL, TRUE, FALSE, NULL))
 {
 
@@ -93,7 +96,8 @@ RecorderKinect::RecorderKinect() :
 RecorderKinect::RecorderKinect(HANDLE skeletonEventHandle) :
     m_device(nullptr),
     m_hNextSkeletonEvent(skeletonEventHandle),
-    m_isOn(false)
+    m_isOn(false),
+    m_smooth_parameters(nullptr) //default, see https://msdn.microsoft.com/en-us/library/nuiskeleton.nui_transform_smooth_parameters.aspx
 {
     enable();
 }
