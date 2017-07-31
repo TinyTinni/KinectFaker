@@ -72,6 +72,15 @@ if (NOT SPDLOG_INCLUDE_DIR)
     add_dependencies(Kinect10 spdlog)
 endif()
 
+###############################################################
+# outcome
+###############################################################
+if (NOT OUTCOME_INCLUDE_DIR)
+    set(OUTCOME_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/outcome" CACHE PATH "Path to outcome header")
+    message(STATUS "Outcome include dir was not specified. Download it.")
+    file(DOWNLOAD "https://raw.githubusercontent.com/ned14/outcome/master/single-header/outcome.hpp" "${OUTCOME_INCLUDE_DIR}/outcome.hpp")
+endif()
+
 
 ###############################################################
 
@@ -81,7 +90,7 @@ PRIVATE
     ${CMAKE_BINARY_DIR} # for proto
     ${JSON_INCLUDE_DIR}
     ${SPDLOG_INCLUDE_DIR}
-    "${CMAKE_SOURCE_DIR}/outcome/single-header"
+    ${OUTCOME_INCLUDE_DIR}
     )
 set(OUTCOME "")
 if (OUTCOME_UTILITY)

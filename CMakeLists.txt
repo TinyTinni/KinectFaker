@@ -5,21 +5,12 @@ project( KinectFaker )
 option(USE_CONAN OFF)
 option(BUILD_GUI "Build GUI" ON)	
 option(BUILD_TESTS "Build Tests" ON)
-option(OUTCOME_UTILITY "Use outcome utilities" OFF)#disables the doxygen warning when including outcome. Bad for the build system
 
+
+# Initialize Conan #############################################################
 if (USE_CONAN)
-    # Initialize Conan #############################################################
     INCLUDE(conanbuildinfo.cmake)
     CONAN_BASIC_SETUP()
-endif()
-
-# adding outcome
-if (OUTCOME_UTILITY)
-    add_subdirectory(
-        "${CMAKE_CURRENT_SOURCE_DIR}/outcome"  # path to outcome source
-        "${CMAKE_CURRENT_BINARY_DIR}/outcome"  # your choice of where to put binaries
-        EXCLUDE_FROM_ALL                       # please only lazy build outcome on demand
-    )
 endif()
 
 # Find Protobuf
