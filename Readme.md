@@ -22,7 +22,7 @@ For the Proxy:
 - [Google's Protobuf](https://github.com/google/protobuf)
 
 For the GUI (Record & Play Skeleton Data):
-- Kinect SDK v1.8 libraries and runtime
+- [Kinect SDK v1.8](https://www.microsoft.com/en-us/download/details.aspx?id=40278) libraries and runtime
 - [Qt5](https://www.qt.io/)  
 - [Google's Protobuf](https://github.com/google/protobuf)
 
