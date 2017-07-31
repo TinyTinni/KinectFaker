@@ -4,6 +4,7 @@ project( KinectProxyGUI )
 
 find_package( KinectSDK REQUIRED )
 
+myhunter_add_package(Protobuf)
 find_package( Protobuf REQUIRED )
 
 # Find includes in corresponding build directories
@@ -12,6 +13,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 # Find the QtWidgets library
+myhunter_add_package(Qt5Widgets)
 find_package(Qt5Widgets REQUIRED)
 
 set (UIS "main_window.ui"

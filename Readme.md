@@ -17,15 +17,29 @@ Recompiling or relinking of the Kinect application is not needed.
 _WIP: GUI is WIP. Currently, it can record and play skeleton animations._
 
 ## Requirements
-- [Kinect SDK v1.8](https://www.microsoft.com/en-us/download/details.aspx?id=40278) (GUI requires KinectSDK + runtime, the proxy just requires the Kinect Headers. Proxy does not require the Kinect runtime, but provides more functionality)
+For the Proxy:
+- Headers from the [Kinect SDK v1.8](https://www.microsoft.com/en-us/download/details.aspx?id=40278) 
 - [Google's Protobuf](https://github.com/google/protobuf)
-- Qt5 for the GUI (Record & Play Skeleton Data)
+
+For the GUI (Record & Play Skeleton Data):
+- Kinect SDK v1.8 libraries and runtime
+- [Qt5](https://www.qt.io/)  
+- [Google's Protobuf](https://github.com/google/protobuf)
+
 
 used libs which will be auto downloaded, when not specified
-- spdlog
-- nlohmann/json
-- catch for tests
-- outcome
+- [spdlog](https://github.com/gabime/spdlog)
+- [nlohmann/json](https://github.com/nlohmann/json)
+- [outcome](https://github.com/ned14/outcome)
+for tests:
+- [catch](https://github.com/philsquared/Catch)
+
+If you want to use [Conan](https://www.conan.io/) or [Hunter](https://github.com/ruslo/hunter)
+as package manger, activate the cmake option `USE_CONAN` resp. `USE_HUNTER` [default=OFF].
+
+When you are using Hunter, only a Kinect SDK installation is required. Rest will be automatically downloaded.
+When you are using Conan, make sure you edit the [conanfile.txt](./conanfile.txt) since it is only used by the build system.
+
 
 ## Using DLL-Proxy
 - Record your skeleton using the prototyped recorder (not recommended) or the GUI (recommended).

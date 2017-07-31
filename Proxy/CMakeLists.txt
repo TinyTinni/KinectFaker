@@ -12,6 +12,10 @@ set (SOURCES
     )
 
 add_library( Kinect10 SHARED "${SOURCES}")
+
+myhunter_add_package(Protobuf)
+find_package( Protobuf REQUIRED )
+
 ###############################################################
 # kinect Headers
 ###############################################################
