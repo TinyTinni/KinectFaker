@@ -216,13 +216,17 @@ void main_window::connect_kinect(bool checked)
 
     const auto emptyFn = [](const NUI_SKELETON_FRAME&) {};
 
-    std::function<void(const NUI_SKELETON_FRAME&)> newFrameCB = recordFrameFN;
+    std::function<void(const NUI_SKELETON_FRAME&)> newFrameCB = perFrameFN;
     if (!ui.cbCaptureSkeleton->isChecked()) newFrameCB = emptyFn; //trinary operator not possible
 
     m_kinect->set_new_point_callback(newFrameCB);
+    m_kinect->enable();
 
-    while (!m_kinect->isOn())
-        m_kinect->enable();
+    if (!m_kinect->isOn())
+    {
+        m_kinect.reset(nullptr);
+        return;
+    }
 
     m_kinect->start_record();
     ui.pbRecord->setEnabled(true);
