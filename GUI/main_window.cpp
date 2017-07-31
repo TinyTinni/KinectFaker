@@ -31,7 +31,24 @@ main_window::main_window(QObject * parent)
 
     connect(ui.pbGenerateConfig, &QPushButton::clicked, this, &main_window::generate_config);
 
-    connect(ui.pbRecord, &QPushButton::clicked, this, &main_window::start_record);
+    connect(ui.pbConnect, &QPushButton::clicked, this, &main_window::connect_kinect);
+    connect(ui.pbRecord, &QPushButton::clicked, [this](bool checked)
+    {
+        if (!checked)
+        {
+            std::ofstream file(ui.leSkeletonOut->text().toLatin1(), std::ios::binary);
+            m_scene.SerializePartialToOstream(&file);
+            m_scene.Clear();
+        }
+    });
+
+    connect(ui.cbEnableSmoothing, &QCheckBox::clicked, [this](bool checked)
+    {
+        if (checked)
+            m_kinect->enable_smoothing(&m_smoothParams);
+        else
+            m_kinect->disable_smoothing();
+    });
 
     //unify size of group boxes
     //const auto groupBoxSize = ui.boxColorStream->size.width() + ui.boxDepthStream->size.width() + ui.boxSkeletonStream->size.width();
@@ -102,18 +119,8 @@ void main_window::generate_config()
 
 }
 
-void main_window::start_record(bool checked)
+void main_window::connect_kinect(bool checked)
 {
-    if (!checked)
-    {
-        m_skeletonEvent.setEnabled(false);
-        m_kinect->stop_record();
-        std::ofstream file(ui.leSkeletonOut->text().toLatin1(), std::ios::binary);
-        m_scene.SerializePartialToOstream(&file);
-        m_scene.Clear();
-        return;
-    }
-
     //checked == true
     //////////////////////////////////////
 
@@ -130,47 +137,27 @@ void main_window::start_record(bool checked)
         ui.pbGenerateConfig->setEnabled(true);
     }
 
-    if (ui.cbEnableSmoothing->isChecked()) //todo
-        m_kinect->enable_smoothing(&m_smoothParams);
-    else
-        m_kinect->disable_smoothing();
-
-    const auto recordSkeletonFn = [this](const NUI_SKELETON_DATA& skd, kif::SkeletonData* data) 
+    const auto showFN = [this](const NUI_SKELETON_FRAME& frame)
     {
-        data->set_etrackingstate(skd.eTrackingState);
-        data->set_dwtrackingid(skd.dwTrackingID);
-        data->set_dwenrollmentindex(skd.dwEnrollmentIndex);
-        data->set_dwuserindex(skd.dwUserIndex);
-        data->set_dwqualityflags(skd.dwQualityFlags);
-
-        auto u_skel_pos = std::make_unique<kif::Vector>();
-        u_skel_pos->set_x(skd.Position.x);
-        u_skel_pos->set_y(skd.Position.y);
-        u_skel_pos->set_z(skd.Position.z);
-        u_skel_pos->set_w(skd.Position.w);
-        data->set_allocated_position(u_skel_pos.release());
-
-
-        std::vector<float> pos(2 * NUI_SKELETON_POSITION_COUNT); // for graphical output
-
-        for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
+        for (int i = 0; i < NUI_SKELETON_COUNT; ++i)
         {
-            auto vec = data->add_skeletonpositions();
-            vec->set_x(skd.SkeletonPositions[i].x);
-            vec->set_y(skd.SkeletonPositions[i].y);
-            vec->set_z(skd.SkeletonPositions[i].z);
-            vec->set_w(skd.SkeletonPositions[i].w);
-            //std::cout << vec->x() << "\t" << vec->y() << "\t" << vec->z() << std::endl;
-            data->add_eskeletonpositiontrackingstate(skd.eSkeletonPositionTrackingState[i]);
-            
-            pos[2 * i] = vec->x();
-            pos[2 * i + 1] = vec->y();
+            const auto& skd = frame.SkeletonData[i];
+            if (skd.eTrackingState == NUI_SKELETON_TRACKED)
+            {
+                std::vector<float> pos(2 * NUI_SKELETON_POSITION_COUNT); // for graphical output
+
+                for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
+                {
+                    pos[2 * i] = skd.SkeletonPositions[i].x;
+                    pos[2 * i + 1] = skd.SkeletonPositions[i].y;
+                }
+                this->m_skeletonViewer->setSkeleton(pos.data());
+                this->m_skeletonViewer->update();
+            }
         }
-        m_skeletonViewer->setSkeleton(pos.data());
-        m_skeletonViewer->update();
     };
 
-    const auto recordFrameFN = [this,&recordSkeletonFn](const NUI_SKELETON_FRAME& frame)
+    const auto recordFrameFN = [this](const NUI_SKELETON_FRAME& frame)
     {
         const auto VecVecCast = [](const Vector4& v)-> kif::Vector*
         {
@@ -188,8 +175,43 @@ void main_window::start_record(bool checked)
         kif_frame->set_allocated_vfloorclipplane(VecVecCast(frame.vFloorClipPlane));
         kif_frame->set_allocated_vnormaltogravity(VecVecCast(frame.vNormalToGravity));
 
+        const auto recordSkeletonFn = [](const NUI_SKELETON_DATA& skd, kif::SkeletonData* data)
+        {
+            data->set_etrackingstate(skd.eTrackingState);
+            data->set_dwtrackingid(skd.dwTrackingID);
+            data->set_dwenrollmentindex(skd.dwEnrollmentIndex);
+            data->set_dwuserindex(skd.dwUserIndex);
+            data->set_dwqualityflags(skd.dwQualityFlags);
+
+            auto u_skel_pos = std::make_unique<kif::Vector>();
+            u_skel_pos->set_x(skd.Position.x);
+            u_skel_pos->set_y(skd.Position.y);
+            u_skel_pos->set_z(skd.Position.z);
+            u_skel_pos->set_w(skd.Position.w);
+            data->set_allocated_position(u_skel_pos.release());
+
+
+            for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; ++i)
+            {
+                auto vec = data->add_skeletonpositions();
+                vec->set_x(skd.SkeletonPositions[i].x);
+                vec->set_y(skd.SkeletonPositions[i].y);
+                vec->set_z(skd.SkeletonPositions[i].z);
+                vec->set_w(skd.SkeletonPositions[i].w);
+
+                data->add_eskeletonpositiontrackingstate(skd.eSkeletonPositionTrackingState[i]);
+            }
+        };
+
         for (int i = 0; i < NUI_SKELETON_COUNT; ++i)
             recordSkeletonFn(frame.SkeletonData[i], kif_frame->add_skeleton_data());
+    };
+
+    const auto perFrameFN = [showFN, recordFrameFN, this](const NUI_SKELETON_FRAME& frame)
+    {
+        showFN(frame);
+        if (this->ui.pbRecord->isChecked())
+            recordFrameFN(frame);
     };
 
     const auto emptyFn = [](const NUI_SKELETON_FRAME&) {};
@@ -203,6 +225,7 @@ void main_window::start_record(bool checked)
         m_kinect->enable();
 
     m_kinect->start_record();
+    ui.pbRecord->setEnabled(true);
     m_skeletonEvent.setEnabled(true);
     return;
 
@@ -242,7 +265,7 @@ void main_window::show_skeleton(int index)
     auto skd = frame.skeleton_data(0);
 
     std::vector<float> pos;
-    pos.reserve(4 * NUI_SKELETON_POSITION_COUNT);
+    pos.reserve(2 * NUI_SKELETON_POSITION_COUNT);
     for (auto v : skd.skeletonpositions())
     {
         pos.push_back(v.x());

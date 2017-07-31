@@ -6,6 +6,7 @@ void SkeletonViewer::setSkeleton(const float* skd)
     float* mapPtr = reinterpret_cast<float*>(m_skeletonVBO.map(QOpenGLBuffer::WriteOnly));
     memcpy(mapPtr, skd, m_skeletonVBO.size());
     m_skeletonVBO.unmap();
+    update();
 }
 
 void SkeletonViewer::initializeGL()

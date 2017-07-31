@@ -22,7 +22,7 @@ private:
     Ui::MainWindow ui;
 
     void generate_config();
-    void start_record(bool checked);
+    void connect_kinect(bool checked);
 
     void load_skeleton();
     void play_skeleton();

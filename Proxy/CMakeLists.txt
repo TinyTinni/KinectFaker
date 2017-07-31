@@ -13,6 +13,10 @@ set (SOURCES
 
 add_library( Kinect10 SHARED "${SOURCES}")
 
+install(TARGETS Kinect10
+    DESTINATION ./Proxy
+    )
+
 myhunter_add_package(Protobuf)
 find_package( Protobuf REQUIRED )
 

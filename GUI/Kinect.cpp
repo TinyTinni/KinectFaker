@@ -32,8 +32,8 @@ RecorderKinect::~RecorderKinect()
 {
     if (m_device)
     {
-        m_device->NuiShutdown();
-        m_device->Release();
+        //m_device->NuiShutdown();
+        //m_device->Release();
     }
     if (m_hNextSkeletonEvent != INVALID_HANDLE_VALUE)
         CloseHandle(m_hNextSkeletonEvent);
