@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Windows.h>
-//#include <RpcProxy.h>
 
 #define NUIAPI /*__declspec(dllexport)*/ WINAPI
 #include <NuiApi.h>
@@ -39,8 +38,6 @@ struct FakeDevice
     const std::string name;
     const std::string filename;
     _bstr_t connectionId;
-
-    //todo: cache device?
 };
 
 
@@ -220,7 +217,7 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
 }
 
 template<typename R, typename ...Args>
-outcome::result<R> call_nui(const char* name, Args... a)
+outcome::result<R> call_nui(const char* name, Args&&... a)
 {
     if (!kinectHndl)
         return std::errc::host_unreachable;
@@ -246,7 +243,7 @@ outcome::result<R> call_nui(const char* name, Args... a)
 }
 
 template<typename R, typename memfuncT, typename... Args>
-R call_device(const char* name, memfuncT mem_f, Args... a)
+R call_device(const char* name, memfuncT mem_f, Args&&... a)
 {
     if (g_singleDevice && is_proxy_init)
         return std::invoke(mem_f, g_singleDevice, std::forward<Args>(a)...);
