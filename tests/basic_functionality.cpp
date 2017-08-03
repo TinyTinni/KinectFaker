@@ -15,16 +15,16 @@ TEST_CASE("init Devices", "[init]")
     {
         REQUIRE(device != nullptr);
         REQUIRE(SUCCEEDED(device->NuiStatus()));
-        REQUIRE(0 == wcscmp(device->NuiDeviceConnectionId(), L"testingConnection"));
-        REQUIRE(device->NuiInstanceIndex() == n_devices - 1);
-        REQUIRE(device->NuiInitializationFlags() == init_flags);
+        CHECK(0 == wcscmp(device->NuiDeviceConnectionId(), L"testingConnection"));
+        CHECK(device->NuiInstanceIndex() == n_devices - 1);
+        CHECK(device->NuiInitializationFlags() == init_flags);
     };
 
     SECTION("create by index")
     {
         INuiSensor* device;
         REQUIRE(SUCCEEDED(NuiCreateSensorByIndex(n_devices - 1, &device)));
-        REQUIRE(SUCCEEDED(device->NuiInitialize(init_flags)));
+        CHECK(SUCCEEDED(device->NuiInitialize(init_flags)));
 
         test_basic_props_fn(device);
 
@@ -35,7 +35,7 @@ TEST_CASE("init Devices", "[init]")
     {
         INuiSensor* device;
         REQUIRE(SUCCEEDED(NuiCreateSensorById(L"testingConnection", &device)));
-        REQUIRE(SUCCEEDED(device->NuiInitialize(init_flags)));
+        CHECK(SUCCEEDED(device->NuiInitialize(init_flags)));
 
         test_basic_props_fn(device);
         
@@ -71,7 +71,7 @@ TEST_CASE("get skeleton frame", "[skeleton]")
         REQUIRE(WaitForSingleObject(nextFrameEvent, 33) == WAIT_OBJECT_0);
         NUI_SKELETON_FRAME frame;
         REQUIRE(SUCCEEDED(device->NuiSkeletonGetNextFrame(0, &frame)));
-        REQUIRE(SUCCEEDED(device->NuiTransformSmooth(&frame, NULL)));
+        CHECK(SUCCEEDED(device->NuiTransformSmooth(&frame, NULL)));
         int tracked_skeletons = 0;
         for (size_t j = 0; j < NUI_SKELETON_COUNT; ++j)
         {
@@ -79,7 +79,7 @@ TEST_CASE("get skeleton frame", "[skeleton]")
             tracked_skeletons += skd.eTrackingState == NUI_SKELETON_TRACKED;
         }
 
-        REQUIRE(tracked_skeletons == 1);
+        CHECK(tracked_skeletons == 1);
 
     }
 

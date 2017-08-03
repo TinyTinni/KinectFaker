@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Windows.h>
+//#include <RpcProxy.h>
+
 #define NUIAPI /*__declspec(dllexport)*/ WINAPI
 #include <NuiApi.h>
 
@@ -43,7 +45,8 @@ struct FakeDevice
 
 
 std::vector<std::unique_ptr<FakeDevice>> g_devices = {};
-HMODULE kinectHndl = NULL; // handle to original Kinect10.dll module
+HMODULE kinectHndl = NULL; // handle to original Kinect10.dll module, is NULL, if Module was not found
+bool is_proxy_init = false; // is false, if the proxy could not initialized e.g. due to error in configuration
 INuiSensor_Faker* g_singleDevice = NULL; // device which is used in single device mode (without creating a INuiSensor)
 
 // loggers
@@ -196,17 +199,23 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
 
         // Don't return false. Even if there are parsing errors or warnings,
         // library should be able redirect to the original Kinect10.dll even without Fake Devices
-if (!create_devices())
-return true;
+        is_proxy_init = create_devices();
+
     }
-    break;
+        break;
     case DLL_PROCESS_DETACH:
         //cleanup
         if (kinectHndl) FreeLibrary(kinectHndl);
+        kinectHndl = NULL;
+        is_proxy_init = false;
+        g_devices.clear();
+        if (g_singleDevice) { g_singleDevice->Release(); g_singleDevice = nullptr; }
+        g_callLog.reset();
+        g_log.reset();
 
         break;
     }
-    return true;
+    return is_proxy_init || kinectHndl;
 
 }
 
@@ -218,11 +227,12 @@ outcome::result<R> call_nui(const char* name, Args... a)
 
     static std::unordered_map<const char*, FARPROC> cached_procs;
 
-    g_callLog->trace("{} ()", name);
-    typedef R(*func)(Args...);
+    g_callLog->trace("original: {} ()", name);
+    typedef R(*funcT)(Args...);
     auto it = cached_procs.find(name);
     if (it == cached_procs.end())
         it = cached_procs.emplace(name, GetProcAddress(kinectHndl, name)).first;
+    funcT f = reinterpret_cast<funcT>(it->second);
     //enable /std:c++17
     //if constexpr( std::is_same<R,void>::value)
     //{
@@ -231,17 +241,25 @@ outcome::result<R> call_nui(const char* name, Args... a)
     //}
     //else
     {
-        return reinterpret_cast<func>(it->second)(std::forward<Args>(a)...);
+        return std::invoke(f, std::forward<Args>(a)...);
     }
 }
 
-template<typename R, typename funcT, typename... Args>
-R call_device(const char* name, funcT f, Args... a)
+template<typename R, typename memfuncT, typename... Args>
+R call_device(const char* name, memfuncT mem_f, Args... a)
 {
-    g_callLog->trace("{} (...)", name);
-    if (!g_singleDevice)
+    if (g_singleDevice && is_proxy_init)
+        return std::invoke(mem_f, g_singleDevice, std::forward<Args>(a)...);
+
+    if (const auto r = call_nui<HRESULT>(name, std::forward<Args>(a)...))
+    {
+        return r.value();
+    }
+    else
+    {
+        //else g_singleDvice not init && no original Kinect module -> Not connected    
         return E_NUI_DEVICE_NOT_CONNECTED;
-    return std::invoke(f, g_singleDevice, std::forward<Args>(a)...);
+    }
 }
 
 #define CALL_DEVICE_H(X, ...) call_device<HRESULT>(#X, &INuiSensor_Faker:: ## X, __VA_ARGS__)
@@ -397,7 +415,6 @@ void NUIAPI NuiShutdown()
     g_callLog->trace("{} called", "NuiShutdown");
     if (g_singleDevice)
     {
-        g_singleDevice->NuiShutdown();
         g_singleDevice->Release();
         g_singleDevice = nullptr;
     }
@@ -437,30 +454,33 @@ HRESULT NUIAPI NuiCreateSensorById(
     INuiSensor **ppNuiSensor
 )
 {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
-    std::string instId = conv1.to_bytes(strInstanceId);
-    g_callLog->trace("{} (strInstanceId={})", "NuiCreateSensorById", instId);
-    // search for sensor with the given id
-    _bstr_t instance_id = strInstanceId;
-    for (size_t i = 0; i < g_devices.size(); ++i)
+    if (is_proxy_init)
     {
-        const auto d = g_devices[i].get();
-        int num_devices;
-        NuiGetSensorCount(&num_devices);
-        num_devices -= static_cast<int>(g_devices.size());
-        if (wcscmp(d->connectionId,instance_id) == 0) //maybe use hashing
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
+        std::string instId = conv1.to_bytes(strInstanceId);
+        g_callLog->trace("{} (strInstanceId={})", "NuiCreateSensorById", instId);
+        // search for sensor with the given id
+        _bstr_t instance_id = strInstanceId;
+        for (size_t i = 0; i < g_devices.size(); ++i)
         {
-            kif::Scene scene; 
-            std::ifstream scene_file(d->filename, std::ios::binary);
-            if (!scene_file.is_open())
-                continue;
-            if (!scene.ParseFromIstream(&scene_file))
-                continue;
+            const auto d = g_devices[i].get();
+            int num_devices;
+            NuiGetSensorCount(&num_devices);
+            num_devices -= static_cast<int>(g_devices.size());
+            if (wcscmp(d->connectionId, instance_id) == 0) //maybe use hashing
+            {
+                kif::Scene scene;
+                std::ifstream scene_file(d->filename, std::ios::binary);
+                if (!scene_file.is_open())
+                    continue;
+                if (!scene.ParseFromIstream(&scene_file))
+                    continue;
 
-            auto frames = scene.frames_size();
+                auto frames = scene.frames_size();
 
-            *ppNuiSensor = new INuiSensor_Faker(std::move(scene), d->connectionId, num_devices+static_cast<int>(i));
-            return S_OK;
+                *ppNuiSensor = new INuiSensor_Faker(std::move(scene), d->connectionId, num_devices + static_cast<int>(i));
+                return S_OK;
+            }
         }
     }
     //else if nothing was found
