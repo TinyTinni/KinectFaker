@@ -50,20 +50,20 @@ INuiSensor_Faker* g_singleDevice = NULL; // device which is used in single devic
 std::shared_ptr<spdlog::logger> g_log = nullptr;
 std::shared_ptr<spdlog::logger> g_callLog = nullptr;
 
-bool file_exists(const _bstr_t name)
+bool file_exists(const _bstr_t name) noexcept
 {
     const auto fileAttrib = GetFileAttributes(name);
     return (fileAttrib == INVALID_FILE_ATTRIBUTES || (fileAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
-bool create_devices()
+std::error_code create_devices() noexcept
 {
     const char* strFile = "fake_kinect.config"; 
     std::ifstream file(strFile);
     if (!file.is_open())
     {
         g_log->error("Could not find config file \"{}\".\n No fake Device configured.", strFile);
-        return false;
+        return std::make_error_code(std::errc::no_such_file_or_directory);
     }
     js::json config;
     try
@@ -145,15 +145,15 @@ bool create_devices()
     catch (const std::exception& exp)
     {
         g_log->error(exp.what());
-        return false;
+        return std::make_error_code(std::errc::protocol_error);
     }
     catch (...)
     {
         g_log->critical("Kinect Faker: Unknown Error while reading config file.");
-        return false;
+        return std::make_error_code(std::errc::io_error);
     }
 
-    return true;
+    return std::error_code();
 }
 
 BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
@@ -196,7 +196,7 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
 
         // Don't return false. Even if there are parsing errors or warnings,
         // library should be able redirect to the original Kinect10.dll even without Fake Devices
-        is_proxy_init = create_devices();
+        is_proxy_init = !create_devices();
 
     }
         break;
@@ -225,7 +225,7 @@ outcome::result<R> call_nui(const char* name, Args&&... a)
     static std::unordered_map<const char*, FARPROC> cached_procs;
 
     g_callLog->trace("original: {} ()", name);
-    typedef R(*funcT)(Args...);
+    typedef R(*funcT)(std::remove_reference_t<Args>...);
     auto it = cached_procs.find(name);
     if (it == cached_procs.end())
         it = cached_procs.emplace(name, GetProcAddress(kinectHndl, name)).first;
