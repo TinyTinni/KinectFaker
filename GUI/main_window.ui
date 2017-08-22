@@ -44,13 +44,28 @@
           </property>
           <property name="baseSize">
            <size>
-            <width>320</width>
+            <width>0</width>
             <height>0</height>
            </size>
           </property>
           <property name="title">
            <string>Color Stream</string>
           </property>
+          <layout class="QGridLayout" name="gridLayout_8">
+           <item row="0" column="0">
+            <widget class="QLabel" name="lbColorOut">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
          <widget class="QGroupBox" name="boxDepthStream">
           <property name="minimumSize">
@@ -61,7 +76,7 @@
           </property>
           <property name="baseSize">
            <size>
-            <width>320</width>
+            <width>0</width>
             <height>0</height>
            </size>
           </property>
@@ -71,7 +86,7 @@
          </widget>
          <widget class="QGroupBox" name="boxSkeletonStream">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -84,7 +99,7 @@
           </property>
           <property name="baseSize">
            <size>
-            <width>320</width>
+            <width>0</width>
             <height>0</height>
            </size>
           </property>

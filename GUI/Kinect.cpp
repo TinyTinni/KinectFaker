@@ -28,6 +28,14 @@ bool RecorderKinect::event_next_frame_fired()
     return true;
 }
 
+bool RecorderKinect::event_next_color_frame_fired()
+{
+    m_device->NuiImageStreamGetNextFrame(m_hImageStream, INFINITE, &m_frame);
+    if (m_newImageCb)
+        m_newImageCb(UniqueImagePtr(&m_frame, this));
+    return false;
+}
+
 RecorderKinect::~RecorderKinect()
 {
     if (m_device)
@@ -78,24 +86,30 @@ void RecorderKinect::enable()
         return;
 
     // Initialize the Kinect and specify that we'll be using skeleton
-    hr = m_device->NuiInitialize(NUI_INITIALIZE_FLAG_USES_SKELETON);
+    hr = m_device->NuiInitialize(NUI_INITIALIZE_FLAG_USES_SKELETON | NUI_INITIALIZE_FLAG_USES_COLOR);
     if (SUCCEEDED(hr))
     {
         // Open a skeleton stream to receive skeleton data
         hr = m_device->NuiSkeletonTrackingEnable(m_hNextSkeletonEvent, 0);
+        if (FAILED(hr))
+            return;
+        hr = m_device->NuiImageStreamOpen(NUI_IMAGE_TYPE_COLOR, NUI_IMAGE_RESOLUTION_640x480,0,2, m_hNextImageEvent,&m_hImageStream);
+        if (FAILED(hr))
+            return;
         m_isOn = true;
     }
 
 }
 
 RecorderKinect::RecorderKinect() :
-    RecorderKinect(CreateEventW(NULL, TRUE, FALSE, NULL))
+    RecorderKinect(CreateEventW(NULL, TRUE, FALSE, NULL), CreateEventW(NULL, TRUE, FALSE, NULL))
 {
 
 }
-RecorderKinect::RecorderKinect(HANDLE skeletonEventHandle) :
+RecorderKinect::RecorderKinect(HANDLE skeletonEventHandle, HANDLE imageEventHandle) :
     m_device(nullptr),
     m_hNextSkeletonEvent(skeletonEventHandle),
+    m_hNextImageEvent(imageEventHandle),
     m_isOn(false),
     m_smooth_parameters(nullptr) //default, see https://msdn.microsoft.com/en-us/library/nuiskeleton.nui_transform_smooth_parameters.aspx
 {
