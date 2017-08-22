@@ -129,8 +129,11 @@ void main_window::connect_kinect(bool checked)
     {
         m_skeletonEvent.setHandle(CreateEventW(NULL, TRUE, FALSE, NULL));
         m_skeletonEvent.setEnabled(true);
-        m_kinect = std::make_unique<RecorderKinect>(m_skeletonEvent.handle());
+        m_imageEvent.setHandle(CreateEventW(NULL, TRUE, FALSE, NULL));
+        m_imageEvent.setEnabled(true);
+        m_kinect = std::make_unique<RecorderKinect>(m_skeletonEvent.handle(), m_imageEvent.handle());
         connect(&m_skeletonEvent, &QWinEventNotifier::activated, [this]() {m_kinect->event_next_frame_fired(); });
+        connect(&m_imageEvent, &QWinEventNotifier::activated, [this]() {m_kinect->event_next_color_frame_fired(); });
 
         BSTR connectionid = m_kinect->get_raw_device()->NuiDeviceConnectionId();
         ui.leConnectionId->setText(QString::fromWCharArray(connectionid));
@@ -220,6 +223,22 @@ void main_window::connect_kinect(bool checked)
     if (!ui.cbCaptureSkeleton->isChecked()) newFrameCB = emptyFn; //trinary operator not possible
 
     m_kinect->set_new_point_callback(newFrameCB);
+
+
+    const auto colorFN = [this](RecorderKinect::UniqueImagePtr& image)
+    {
+        auto tex = image->pFrameTexture;
+        NUI_LOCKED_RECT rect; 
+        tex->LockRect(0, &rect, nullptr, 0);
+
+        QImage qi = QImage{ rect.pBits,640,480,rect.Pitch,QImage::Format_RGB32 }.scaled(ui.lbColorOut->size());
+
+        ui.lbColorOut->setPixmap(QPixmap::fromImage(qi));
+        tex->UnlockRect(0);
+
+    };
+    m_kinect->set_new_frame_callback(colorFN);
+
     m_kinect->enable();
 
     if (!m_kinect->isOn())
