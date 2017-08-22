@@ -1,11 +1,22 @@
 cmake_minimum_required( VERSION 3.1 )
 project( KinectProxyGUI )
 
-
+###############################################################
+# packages
+###############################################################
 find_package( KinectSDK REQUIRED )
 
 myhunter_add_package(Protobuf)
 find_package( Protobuf REQUIRED )
+
+find_package(FFMPEG REQUIRED COMPONENTS SWSCALE AVUTIL AVFORMAT AVCODEC)
+
+if (NOT OUTCOME_INCLUDE_DIR)
+    set(OUTCOME_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/outcome" CACHE PATH "Path to outcome header")
+    message(STATUS "Outcome include dir was not specified. Download it.")
+    file(DOWNLOAD "https://raw.githubusercontent.com/ned14/outcome/master/single-header/outcome.hpp" "${OUTCOME_INCLUDE_DIR}/outcome.hpp")
+endif()
+###############################################################
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -26,6 +37,8 @@ QT5_WRAP_UI(UI_SOURCES
 
 ## (optional) GUI
 set (SOURCES
+    "Kinect.h"
+    "Kinect.cpp"
     "main.cpp"
     "main_window.h"
     "main_window.cpp"
@@ -33,22 +46,25 @@ set (SOURCES
     "../Proxy/NuiSensor_Faker.cpp"
     "SkeletonViewer.h"
     "SkeletonViewer.cpp"
-    "Kinect.h"
-    "Kinect.cpp"
+    "VideoPlay.h"
+    "VideoPlay.cpp"
     )
 add_executable( GUI WIN32 ${SOURCES} ${UI_SOURCES})
 
 target_include_directories(GUI 
     PUBLIC 
+    ${CMAKE_BINARY_DIR}
+    
     ${KinectSDK_INCLUDE_DIRS}
     ${Qt5Widgets_INCLUDE_DIRS}
-    ${CMAKE_BINARY_DIR}
+    ${FFMPEG_INCLUDE_DIRS}
+    ${OUTCOME_INCLUDE_DIR}
     )
-    
     
 target_link_libraries(GUI 
     PUBLIC
     ${KinectSDK_LIBRARIES}
+    ${FFMPEG_LIBRARIES}
     protobuf_def
     Qt5::Widgets
     )
@@ -58,7 +74,9 @@ target_compile_definitions(GUI
     NOMINMAX
     )
     
-
+###############################################################
+# install
+###############################################################
 if(Qt5_FOUND AND WIN32 AND TARGET Qt5::qmake AND NOT TARGET Qt5::windeployqt)
     get_target_property(_qt5_qmake_location Qt5::qmake IMPORTED_LOCATION)
 
