@@ -1,6 +1,9 @@
 #include "NuiSensor_Faker.h"
 
+#include <fstream>
 #include <utility>
+
+#include <KinectFileDef.pb.h>
 
 ULONG INuiSensor_Faker::Release()
 {
@@ -40,20 +43,17 @@ INuiSensor_Faker::~INuiSensor_Faker()
     if (m_nextFrameTimer != INVALID_HANDLE_VALUE) DeleteTimerQueueTimer(0,m_nextFrameTimer,0);
 }
 
-INuiSensor_Faker::INuiSensor_Faker(kif::Scene s, _bstr_t connectionId, int index):
+INuiSensor_Faker::INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index) :
     m_cRef(1),
     m_connectionId(std::move(connectionId)),
     m_connectionIndex(std::move(index)),
     m_initFlags(0),
-    m_scene(std::move(s)),
+    m_scene(),
     m_currentFrameIdx(0),
     m_nextFrameTimer(INVALID_HANDLE_VALUE),
-    m_nextSkeletonEvent()
+    m_nextSkeletonEvent(INVALID_HANDLE_VALUE),
+    m_streamPaths(std::move(s))
 {
-    //INVALID
-    // s
-    // connectionId
-    // index
 }
 
 HRESULT INuiSensor_Faker::NuiInitialize(DWORD dwFlags)
@@ -61,8 +61,19 @@ HRESULT INuiSensor_Faker::NuiInitialize(DWORD dwFlags)
     if (!(dwFlags & NUI_INITIALIZE_FLAG_USES_SKELETON))
         return E_INVALIDARG;
 
-    m_initFlags = dwFlags;
-    return S_OK;
+    HRESULT hr = S_OK;
+    m_initFlags = 0;
+
+    if (dwFlags & NUI_INITIALIZE_FLAG_USES_SKELETON)
+    {
+        std::ifstream scene_file(m_streamPaths.skeletonFilePath, std::ios::binary);
+        if (scene_file.is_open())
+            if (!m_scene.ParseFromIstream(&scene_file))
+                hr |= E_NUI_HARDWARE_FEATURE_UNAVAILABLE;
+            else
+                m_initFlags |= NUI_INITIALIZE_FLAG_USES_SKELETON;
+    }
+    return hr;
 }
 
 void INuiSensor_Faker::NuiShutdown(void)
@@ -70,6 +81,7 @@ void INuiSensor_Faker::NuiShutdown(void)
     CloseHandle(m_nextSkeletonEvent);
     if (m_nextFrameTimer != INVALID_HANDLE_VALUE) DeleteTimerQueueTimer(0, m_nextFrameTimer, 0);
     m_nextFrameTimer = INVALID_HANDLE_VALUE;
+    m_scene.Clear();
     m_initFlags = 0;
 }
 
@@ -140,6 +152,8 @@ VOID CALLBACK FrameCb(
 
 HRESULT INuiSensor_Faker::NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWORD dwFlags)
 {
+    if (m_scene.frames_size() == 0) return ERROR_INVALID_OPERATION;
+
     m_nextSkeletonEvent = hNextFrameEvent;
     const bool r = CreateTimerQueueTimer(
         &m_nextFrameTimer,
@@ -150,7 +164,7 @@ HRESULT INuiSensor_Faker::NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWOR
         30,//todo: save fps in file?
         WT_EXECUTEDEFAULT
     );
-    return (r) ? S_OK : ERROR_INVALID_OPERATION;
+    return (r) ? S_OK : r;
 }
 
 HRESULT INuiSensor_Faker::NuiSkeletonTrackingDisable(void)
@@ -166,8 +180,8 @@ HRESULT INuiSensor_Faker::NuiSkeletonSetTrackedSkeletons(DWORD * TrackingIDs)
 
 HRESULT INuiSensor_Faker::NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NUI_SKELETON_FRAME * pSkeletonFrame)
 {
-    if (!pSkeletonFrame)
-        return E_POINTER;
+    if (m_scene.frames_size() == 0) return ERROR_INVALID_OPERATION;
+    if (!pSkeletonFrame) return E_POINTER;
 
     const auto VecVecCast = [](const kif::Vector& vec) -> Vector4
     {
@@ -207,8 +221,7 @@ HRESULT INuiSensor_Faker::NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NU
     }
     const int countFrames = m_scene.frames_size();
 
-    if (++m_currentFrameIdx == m_scene.frames_size())
-        m_currentFrameIdx = 0;
+    m_currentFrameIdx = (m_currentFrameIdx + 1) % m_scene.frames_size();
     
     ResetEvent(m_nextSkeletonEvent);
 
