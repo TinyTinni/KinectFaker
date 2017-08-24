@@ -5,12 +5,13 @@
 #define NUIAPI /*__declspec(dllexport)*/ WINAPI
 #include <NuiApi.h>
 
-#include <fstream> //fstream
+#include <fstream>
 #include <utility> //move, foward
 #include <vector>
 #include <memory>
 #include <string>
 #include <functional> // invoke
+#include <new> // nothrow
 
 #include <locale> //convert wchar_t to char in NuiGetSensorById
 #include <codecvt> //as above
@@ -18,7 +19,6 @@
 #include <tchar.h> //_T
 #include <comutil.h> //convert from BSTR to _bstr_t
 
-#include <KinectFileDef.pb.h>
 #include "NuiSensor_Faker.h"
 
 #include <json.hpp>
@@ -336,13 +336,10 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
     if (!scene_file.is_open())
         return E_NUI_BADINDEX;
 
-    kif::Scene scene;
-    if (!scene.ParseFromIstream(&scene_file))
-        return E_OUTOFMEMORY;
-
-    auto frames = scene.frames_size();
-    *ppNuiSensor = new INuiSensor_Faker(std::move(scene), g_devices[index]->connectionId, index + pCount);
-    return S_OK;
+    INuiSensor_Faker::StreamInfos s;
+    s.skeletonFilePath = g_devices[index]->filename;
+    *ppNuiSensor = new (std::nothrow) INuiSensor_Faker(std::move(s), g_devices[index]->connectionId, index + pCount);
+    return (ppNuiSensor) ? S_OK : E_OUTOFMEMORY;
 }
 HRESULT NUIAPI NuiCameraElevationGetAngle(
     LONG *plAngleDegrees
@@ -498,17 +495,10 @@ HRESULT NUIAPI NuiCreateSensorById(
             num_devices -= static_cast<int>(g_devices.size());
             if (wcscmp(d->connectionId, instance_id) == 0) //maybe use hashing
             {
-                kif::Scene scene;
-                std::ifstream scene_file(d->filename, std::ios::binary);
-                if (!scene_file.is_open())
-                    continue;
-                if (!scene.ParseFromIstream(&scene_file))
-                    continue;
-
-                auto frames = scene.frames_size();
-
-                *ppNuiSensor = new INuiSensor_Faker(std::move(scene), d->connectionId, num_devices + static_cast<int>(i));
-                return S_OK;
+                INuiSensor_Faker::StreamInfos s;
+                s.skeletonFilePath = d->filename;
+                *ppNuiSensor = new (std::nothrow) INuiSensor_Faker(std::move(s), d->connectionId, num_devices + static_cast<int>(i));
+                return (ppNuiSensor) ? S_OK: E_OUTOFMEMORY;
             }
         }
     }
