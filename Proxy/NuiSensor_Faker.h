@@ -122,13 +122,16 @@ private:
     // event handles
     HANDLE m_nextSkeletonEvent = NULL;
     HANDLE m_nextImageEvent = NULL;
+    const StreamInfos m_streamPaths;
+public:
 
     const StreamInfos m_streamPaths;
 
+    //INuiSensor_Faker(kif::Scene s, _bstr_t connectionId, int index);
+    INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index);
 
-public:
 
-    ~INuiSensor_Faker();
+
 
     //INuiSensor_Faker(kif::Scene s, _bstr_t connectionId, int index);
     INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index);

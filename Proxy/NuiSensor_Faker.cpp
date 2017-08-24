@@ -55,9 +55,14 @@ INuiSensor_Faker::~INuiSensor_Faker()
 }
 
 INuiSensor_Faker::INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index) :
+    m_cRef(1),
     m_connectionId(std::move(connectionId)),
     m_connectionIndex(std::move(index)),
+    m_initFlags(0),
     m_scene(),
+    m_currentFrameIdx(0),
+    m_nextFrameTimer(INVALID_HANDLE_VALUE),
+    m_nextSkeletonEvent(INVALID_HANDLE_VALUE),
     m_streamPaths(std::move(s))
 {
 }
@@ -102,6 +107,7 @@ void INuiSensor_Faker::NuiShutdown(void)
     CloseHandle(m_nextSkeletonEvent);
     if (m_nextSkeletonFrameTimer != NULL) DeleteTimerQueueTimer(0, m_nextSkeletonFrameTimer, 0);
     m_nextSkeletonFrameTimer = NULL;
+    m_scene.Clear();
     m_initFlags = 0;
 
     m_scene.Clear();
@@ -191,6 +197,8 @@ HRESULT INuiSensor_Faker::NuiCameraElevationGetAngle(LONG * plAngleDegrees)
 
 HRESULT INuiSensor_Faker::NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWORD dwFlags)
 {
+    if (m_scene.frames_size() == 0) return ERROR_INVALID_OPERATION;
+
     if (m_scene.frames_size() == 0) return ERROR_INVALID_OPERATION;
 
     m_nextSkeletonEvent = hNextFrameEvent;
