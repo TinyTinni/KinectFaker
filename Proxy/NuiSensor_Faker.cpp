@@ -55,14 +55,9 @@ INuiSensor_Faker::~INuiSensor_Faker()
 }
 
 INuiSensor_Faker::INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index) :
-    m_cRef(1),
     m_connectionId(std::move(connectionId)),
     m_connectionIndex(std::move(index)),
-    m_initFlags(0),
     m_scene(),
-    m_currentFrameIdx(0),
-    m_nextFrameTimer(INVALID_HANDLE_VALUE),
-    m_nextSkeletonEvent(INVALID_HANDLE_VALUE),
     m_streamPaths(std::move(s))
 {
 }
@@ -108,7 +103,8 @@ void INuiSensor_Faker::NuiShutdown(void)
     if (m_nextSkeletonFrameTimer != NULL) DeleteTimerQueueTimer(0, m_nextSkeletonFrameTimer, 0);
     m_nextSkeletonFrameTimer = NULL;
     m_scene.Clear();
-    m_initFlags = 0;
+    m_videoStream.reset();
+    m_imageCached.reset();
 
     m_scene.Clear();
     m_videoStream.reset();

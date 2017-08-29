@@ -123,6 +123,8 @@ private:
     HANDLE m_nextSkeletonEvent = NULL;
     HANDLE m_nextImageEvent = NULL;
     const StreamInfos m_streamPaths;
+
+
 public:
 
     const StreamInfos m_streamPaths;
