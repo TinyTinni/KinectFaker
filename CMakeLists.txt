@@ -21,6 +21,15 @@ endif()
 myhunter_add_package(Protobuf)
 find_package( Protobuf REQUIRED )
 
+###############################################################
+# outcome
+###############################################################
+if (NOT OUTCOME_INCLUDE_DIR)
+    set(OUTCOME_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/outcome" CACHE PATH "Path to outcome header")
+    message(STATUS "Outcome include dir was not specified. Download it.")
+    file(DOWNLOAD "https://raw.githubusercontent.com/ned14/outcome/master/single-header/outcome.hpp" "${OUTCOME_INCLUDE_DIR}/outcome.hpp")
+endif()
+
 # protobuf lib
 protobuf_generate_cpp(PROTO_SRC PROTO_HDR "KinectFileDef.proto")
 add_library(protobuf_def ${PROTO_SRC} "${PROTO_HDR};KinectFileDef.proto")
