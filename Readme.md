@@ -22,6 +22,7 @@ See [ffmpeg branch](https://github.com/TinyTinni/KinectFaker/tree/ffmpeg) for a 
 For the Proxy:
 - Headers from the [Kinect SDK v1.8](https://www.microsoft.com/en-us/download/details.aspx?id=40278) 
 - [Google's Protobuf](https://github.com/google/protobuf)
+- [ffmpeg 3.2](https://ffmpeg.org/)
 
 For the GUI (Record & Play Skeleton Data):
 - [Kinect SDK v1.8](https://www.microsoft.com/en-us/download/details.aspx?id=40278) libraries and runtime
