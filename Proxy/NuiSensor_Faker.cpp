@@ -2,8 +2,19 @@
 
 #include <fstream>
 #include <utility>
+#include <new>
 
 #include <KinectFileDef.pb.h>
+
+VOID CALLBACK FrameCb(
+    _In_ PVOID   lpParameter,
+    _In_ BOOLEAN TimerOrWaitFired
+)
+{
+    UNREFERENCED_PARAMETER(TimerOrWaitFired);
+    HANDLE* pEvent = reinterpret_cast<HANDLE*>(lpParameter);
+    SetEvent(*pEvent);
+}
 
 ULONG INuiSensor_Faker::Release()
 {
@@ -40,18 +51,13 @@ HRESULT INuiSensor_Faker::QueryInterface(const IID & riid, void ** ppvObj)
 
 INuiSensor_Faker::~INuiSensor_Faker()
 {
-    if (m_nextFrameTimer != INVALID_HANDLE_VALUE) DeleteTimerQueueTimer(0,m_nextFrameTimer,0);
+    if (m_nextSkeletonFrameTimer != NULL) DeleteTimerQueueTimer(0,m_nextSkeletonFrameTimer,0);
 }
 
 INuiSensor_Faker::INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index) :
-    m_cRef(1),
     m_connectionId(std::move(connectionId)),
     m_connectionIndex(std::move(index)),
-    m_initFlags(0),
     m_scene(),
-    m_currentFrameIdx(0),
-    m_nextFrameTimer(INVALID_HANDLE_VALUE),
-    m_nextSkeletonEvent(INVALID_HANDLE_VALUE),
     m_streamPaths(std::move(s))
 {
 }
@@ -63,26 +69,44 @@ HRESULT INuiSensor_Faker::NuiInitialize(DWORD dwFlags)
 
     HRESULT hr = S_OK;
     m_initFlags = 0;
+    try {
+        if (dwFlags & NUI_INITIALIZE_FLAG_USES_SKELETON)
+        {
+            std::ifstream scene_file(m_streamPaths.skeletonFilePath, std::ios::binary);
+            if (scene_file.is_open())
+                if (!m_scene.ParseFromIstream(&scene_file))
+                    hr |= E_NUI_HARDWARE_FEATURE_UNAVAILABLE;
+                else
+                    m_initFlags |= NUI_INITIALIZE_FLAG_USES_SKELETON;
+        }
 
-    if (dwFlags & NUI_INITIALIZE_FLAG_USES_SKELETON)
-    {
-        std::ifstream scene_file(m_streamPaths.skeletonFilePath, std::ios::binary);
-        if (scene_file.is_open())
-            if (!m_scene.ParseFromIstream(&scene_file))
-                hr |= E_NUI_HARDWARE_FEATURE_UNAVAILABLE;
-            else
-                m_initFlags |= NUI_INITIALIZE_FLAG_USES_SKELETON;
+        if (dwFlags & NUI_INITIALIZE_FLAG_USES_COLOR)
+        {
+            //todo: check if file exists
+            m_videoStream = std::make_unique<Video>(m_streamPaths.colorFilePath.c_str());
+            m_imageCached = std::make_unique<INuiFrameTexture_Faker>(*(m_videoStream->currentFrame));
+            m_initFlags |= NUI_INITIALIZE_FLAG_USES_COLOR;
+        }
     }
+    catch (std::bad_alloc& )
+    {
+        NuiShutdown();
+        return E_OUTOFMEMORY;
+    }
+
     return hr;
 }
 
 void INuiSensor_Faker::NuiShutdown(void)
 {
     CloseHandle(m_nextSkeletonEvent);
-    if (m_nextFrameTimer != INVALID_HANDLE_VALUE) DeleteTimerQueueTimer(0, m_nextFrameTimer, 0);
-    m_nextFrameTimer = INVALID_HANDLE_VALUE;
-    m_scene.Clear();
+    if (m_nextSkeletonFrameTimer != NULL) DeleteTimerQueueTimer(0, m_nextSkeletonFrameTimer, 0);
+    m_nextSkeletonFrameTimer = NULL;
     m_initFlags = 0;
+
+    m_scene.Clear();
+    m_videoStream.reset();
+    m_imageCached.reset();
 }
 
 HRESULT INuiSensor_Faker::NuiSetFrameEndEvent(HANDLE hEvent, DWORD dwFrameEventFlag)
@@ -92,7 +116,17 @@ HRESULT INuiSensor_Faker::NuiSetFrameEndEvent(HANDLE hEvent, DWORD dwFrameEventF
 
 HRESULT INuiSensor_Faker::NuiImageStreamOpen(NUI_IMAGE_TYPE eImageType, NUI_IMAGE_RESOLUTION eResolution, DWORD dwImageFrameFlags, DWORD dwFrameLimit, HANDLE hNextFrameEvent, HANDLE * phStreamHandle)
 {
-    return E_NOTIMPL;
+    m_nextImageEvent = hNextFrameEvent;
+    const bool r = CreateTimerQueueTimer(
+        phStreamHandle,
+        NULL, //TimerQueue
+        FrameCb,
+        &m_nextImageEvent,
+        30,
+        30,//todo: save fps in file?
+        WT_EXECUTEDEFAULT
+    );
+    return S_OK;
 }
 
 HRESULT INuiSensor_Faker::NuiImageStreamSetImageFrameFlags(HANDLE hStream, DWORD dwImageFrameFlags)
@@ -107,12 +141,27 @@ HRESULT INuiSensor_Faker::NuiImageStreamGetImageFrameFlags(HANDLE hStream, DWORD
 
 HRESULT INuiSensor_Faker::NuiImageStreamGetNextFrame(HANDLE hStream, DWORD dwMillisecondsToWait, NUI_IMAGE_FRAME * pImageFrame)
 {
-    return E_NOTIMPL;
+    if (hStream == NULL) E_INVALIDARG;
+    if (m_nextImageEvent == NULL) E_POINTER;
+
+    AVFrame* n = m_videoStream->nextFrame();
+    if (!n)
+    {
+        m_videoStream->restart();
+        n = m_videoStream->nextFrame();
+        if (!n)
+            return E_NUI_FRAME_NO_DATA;
+    }
+    m_imageCached->setNewFrame(*n);
+
+    pImageFrame->pFrameTexture = m_imageCached.get();
+    ResetEvent(m_nextImageEvent);
+    return S_OK;
 }
 
 HRESULT INuiSensor_Faker::NuiImageStreamReleaseFrame(HANDLE hStream, NUI_IMAGE_FRAME * pImageFrame)
 {
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 HRESULT INuiSensor_Faker::NuiImageGetColorPixelCoordinatesFromDepthPixel(NUI_IMAGE_RESOLUTION eColorResolution, const NUI_IMAGE_VIEW_AREA * pcViewArea, LONG lDepthX, LONG lDepthY, USHORT usDepthValue, LONG * plColorX, LONG * plColorY)
@@ -140,23 +189,13 @@ HRESULT INuiSensor_Faker::NuiCameraElevationGetAngle(LONG * plAngleDegrees)
     return E_NOTIMPL;
 }
 
-VOID CALLBACK FrameCb(
-    _In_ PVOID   lpParameter,
-    _In_ BOOLEAN TimerOrWaitFired
-)
-{
-    UNREFERENCED_PARAMETER(TimerOrWaitFired);
-    HANDLE* pEvent = reinterpret_cast<HANDLE*>(lpParameter);
-    SetEvent(*pEvent);
-}
-
 HRESULT INuiSensor_Faker::NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWORD dwFlags)
 {
     if (m_scene.frames_size() == 0) return ERROR_INVALID_OPERATION;
 
     m_nextSkeletonEvent = hNextFrameEvent;
     const bool r = CreateTimerQueueTimer(
-        &m_nextFrameTimer,
+        &m_nextSkeletonFrameTimer,
         NULL, //TimerQueue
         FrameCb,
         &m_nextSkeletonEvent,
@@ -169,7 +208,7 @@ HRESULT INuiSensor_Faker::NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWOR
 
 HRESULT INuiSensor_Faker::NuiSkeletonTrackingDisable(void)
 {
-    DeleteTimerQueueTimer(0, m_nextFrameTimer, 0);
+    DeleteTimerQueueTimer(0, m_nextSkeletonFrameTimer, 0);
     return S_OK;
 }
 
@@ -260,7 +299,8 @@ BSTR INuiSensor_Faker::NuiAudioArrayId(void)
 
 HRESULT INuiSensor_Faker::NuiStatus(void)
 {
-    return (m_scene.frames_size()) ? S_OK : E_NUI_NOTCONNECTED;
+    //return (m_scene.frames_size() > 0) ? S_OK : E_NUI_NOTCONNECTED;
+    return S_OK;
 }
 
 DWORD INuiSensor_Faker::NuiInitializationFlags(void)
@@ -311,4 +351,170 @@ HRESULT INuiSensor_Faker::NuiGetDepthFilter(INuiDepthFilter ** ppDepthFilter)
 HRESULT INuiSensor_Faker::NuiGetDepthFilterForTimeStamp(LARGE_INTEGER liTimeStamp, INuiDepthFilter ** ppDepthFilter)
 {
     return E_NOTIMPL;
+}
+
+INuiSensor_Faker::Video::Video(const char * filename)
+{
+    av_register_all();
+#ifdef _DEBUG
+    av_log_set_level(AV_LOG_DEBUG);
+#endif
+    avformat_open_input(&formatCtx, filename, nullptr, nullptr);
+    // if <0 -> failure
+
+    avformat_find_stream_info(formatCtx, nullptr);
+    // if < 0 -> failure
+
+    streamIdx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+    //if videoStreamId < 0 -> failure
+
+    stream = formatCtx->streams[streamIdx];
+   
+    codec = avcodec_find_decoder(stream->codecpar->codec_id);
+    // if codec == nullptr -> failed
+    codecCtx = avcodec_alloc_context3(codec);
+    codecCtx->refcounted_frames = 0;
+    // if codecCtx == nullptr -> failed
+    avcodec_parameters_to_context(codecCtx, stream->codecpar);
+    avcodec_open2(codecCtx, codec, NULL);
+
+    av_init_packet(&pkg);
+
+    videoFrame = av_frame_alloc();
+    videoFrame->width = codecCtx->width;
+    videoFrame->height = codecCtx->height;
+    videoFrame->format = codecCtx->pix_fmt;
+    av_image_alloc(videoFrame->data, videoFrame->linesize, codecCtx->width, codecCtx->height, codecCtx->pix_fmt, 0);
+    //failed --->
+    currentFrame = av_frame_alloc();
+    currentFrame->width = nui_width;
+    currentFrame->height = nui_height;
+    currentFrame->format = nui_pix_fmt;
+    av_image_alloc(currentFrame->data, currentFrame->linesize, nui_width, nui_height, nui_pix_fmt, 0);
+    //<--- until failed
+
+    swsCtx = sws_getContext(
+        //src
+        codecCtx->width,
+        codecCtx->height,
+        (AVPixelFormat)codecCtx->pix_fmt,
+        //dst
+        nui_width,
+        nui_height,
+        (AVPixelFormat)nui_pix_fmt,
+        SWS_BICUBIC,
+        nullptr, nullptr, nullptr
+    );
+    // if swsCtx == nullptr -> failed
+}
+
+INuiSensor_Faker::Video::~Video()
+{
+    if (formatCtx) avformat_close_input(&formatCtx);
+    if (codecCtx) avcodec_free_context(&codecCtx);
+    if (swsCtx) sws_freeContext(swsCtx);
+    if (videoFrame) av_frame_free(&videoFrame);
+    if (currentFrame) av_frame_free(&currentFrame);
+}
+
+AVFrame* INuiSensor_Faker::Video::nextFrame()
+{
+
+    while (av_read_frame(formatCtx, &pkg) >= 0)
+    {
+        if (pkg.stream_index == streamIdx)
+        {
+            avcodec_send_packet(codecCtx, &pkg);
+            avcodec_receive_frame(codecCtx, videoFrame);
+            sws_scale(swsCtx, videoFrame->data, videoFrame->linesize, 0, videoFrame->height, currentFrame->data, currentFrame->linesize);
+            av_packet_unref(&pkg);
+            return currentFrame;
+        }
+    }
+    return nullptr;
+}
+
+void INuiSensor_Faker::Video::restart()
+{
+    av_seek_frame(formatCtx, streamIdx, 0, 0);
+    av_packet_free_side_data(&pkg);
+}
+
+INuiFrameTexture_Faker::INuiFrameTexture_Faker(AVFrame& f):
+    m_cRef(1),
+    m_frame(&f)
+{
+}
+
+INuiFrameTexture_Faker::~INuiFrameTexture_Faker()
+{
+}
+
+int INuiFrameTexture_Faker::BufferLen(void)
+{
+    return av_image_get_buffer_size( 
+        AVPixelFormat(AV_PIX_FMT_RGB24), 640, 480, m_frame->linesize[0]);
+}
+
+int INuiFrameTexture_Faker::Pitch(void)
+{
+    return (!m_frame) ? 0 : m_frame->linesize[0];
+}
+
+HRESULT INuiFrameTexture_Faker::LockRect(UINT Level, NUI_LOCKED_RECT * pLockedRect, RECT * pRect, DWORD Flags)
+{
+    if (Level != 0) return E_INVALIDARG;
+    if (pLockedRect == nullptr) return E_POINTER;
+
+    pLockedRect->pBits = m_frame->data[0];
+    pLockedRect->Pitch = m_frame->linesize[0];
+    pLockedRect->size = this->BufferLen();
+    return S_OK;
+}
+
+HRESULT INuiFrameTexture_Faker::GetLevelDesc(UINT Level, NUI_SURFACE_DESC * pDesc)
+{
+    if (Level != 0) return E_INVALIDARG;
+    if (pDesc == nullptr) return E_POINTER;
+    pDesc->Width = m_frame->width;
+    pDesc->Height = m_frame->height;
+    return S_OK;
+}
+
+HRESULT INuiFrameTexture_Faker::UnlockRect(UINT Level)
+{
+    return S_OK;
+}
+
+ULONG INuiFrameTexture_Faker::Release()
+{
+    // Decrement the object's internal counter.
+    ULONG ulRefCount = InterlockedDecrement(&m_cRef);
+    if (0 == m_cRef)
+    {
+        delete this;
+    }
+    return ulRefCount;
+}
+
+ULONG INuiFrameTexture_Faker::AddRef()
+{
+    InterlockedIncrement(&m_cRef);
+    return m_cRef;
+}
+
+HRESULT INuiFrameTexture_Faker::QueryInterface(const IID & riid, void ** ppvObj)
+{
+    // Always set out parameter to NULL, validating it first.
+    if (!ppvObj)
+        return E_INVALIDARG;
+    *ppvObj = NULL;
+    if (riid == IID_IUnknown || riid == IID_INuiFrameTexture)
+    {
+        // Increment the reference count and return the pointer.
+        *ppvObj = (LPVOID)this;
+        AddRef();
+        return NOERROR;
+    }
+    return E_NOINTERFACE;
 }

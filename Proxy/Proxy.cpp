@@ -37,6 +37,7 @@ struct FakeDevice
 {
     const std::string name;
     const std::string filename;
+    const std::string imageFilename;
     _bstr_t connectionId;
 };
 
@@ -50,10 +51,11 @@ INuiSensor_Faker* g_singleDevice = NULL; // device which is used in single devic
 std::shared_ptr<spdlog::logger> g_log = nullptr;
 std::shared_ptr<spdlog::logger> g_callLog = nullptr;
 
+
 bool file_exists(const _bstr_t name) noexcept
 {
     const auto fileAttrib = GetFileAttributes(name);
-    return (fileAttrib == INVALID_FILE_ATTRIBUTES || (fileAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    return !((fileAttrib == INVALID_FILE_ATTRIBUTES || (fileAttrib & FILE_ATTRIBUTE_DIRECTORY)));
 }
 
 std::error_code create_devices() noexcept
@@ -122,8 +124,18 @@ std::error_code create_devices() noexcept
                     continue;
                 }
                 const auto skeleton_file = skeleton_file_it.value().get<std::string>();
-                if (file_exists(skeleton_file.c_str()))
+                if (!file_exists(skeleton_file.c_str()))
                     g_log->warn("File given by \"skeleton_file\" does not exist.\n skeleton_file : {}", skeleton_file);
+
+                const auto color_file_it = dev.find("color_file");
+                std::string color_file;
+                if (color_file_it == dev.end())
+                    g_log->warn("Could not find color_file in configuration. Color Stream will be not avaiable on Device \"{}\"", dev_name);
+                else
+                    color_file = color_file_it.value().get<std::string>();
+                if (!file_exists(skeleton_file.c_str()))
+                    g_log->warn("File given by \"color_file\" does not exists.\n color_file: {}", color_file);
+
 
                 // device creation
                 g_devices.push_back( //throws out_of_memory
@@ -131,6 +143,7 @@ std::error_code create_devices() noexcept
                         FakeDevice{
                     dev_name,
                     skeleton_file, //skeleton file
+                    color_file,
                     connID //connectionId
                 }
                 ));
@@ -306,6 +319,7 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
 
     INuiSensor_Faker::StreamInfos s;
     s.skeletonFilePath = g_devices[index]->filename;
+    s.colorFilePath = g_devices[index]->imageFilename;
     *ppNuiSensor = new (std::nothrow) INuiSensor_Faker(std::move(s), g_devices[index]->connectionId, index + pCount);
     return (ppNuiSensor) ? S_OK : E_OUTOFMEMORY;
 }
@@ -465,6 +479,7 @@ HRESULT NUIAPI NuiCreateSensorById(
             {
                 INuiSensor_Faker::StreamInfos s;
                 s.skeletonFilePath = d->filename;
+                s.colorFilePath = d->imageFilename;
                 *ppNuiSensor = new (std::nothrow) INuiSensor_Faker(std::move(s), d->connectionId, num_devices + static_cast<int>(i));
                 return (ppNuiSensor) ? S_OK: E_OUTOFMEMORY;
             }
