@@ -33,6 +33,7 @@ used libs which will be auto downloaded, when not specified
 - [spdlog](https://github.com/gabime/spdlog)
 - [nlohmann/json](https://github.com/nlohmann/json)
 - [outcome](https://github.com/ned14/outcome)
+
 for tests:
 - [catch](https://github.com/philsquared/Catch)
 

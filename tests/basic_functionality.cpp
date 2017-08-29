@@ -5,7 +5,7 @@
 
 TEST_CASE("init Devices", "[init]")
 {  
-    const DWORD init_flags = NUI_INITIALIZE_FLAG_USES_SKELETON;
+    const DWORD init_flags = NUI_INITIALIZE_FLAG_USES_SKELETON | NUI_INITIALIZE_FLAG_USES_COLOR;
 
     int n_devices;
     REQUIRE(SUCCEEDED(NuiGetSensorCount(&n_devices)));
@@ -67,8 +67,7 @@ TEST_CASE("get skeleton frame", "[skeleton]")
     //check if the next 10 frames has a tracked skeleton
     for (size_t i = 0; i < 10; ++i)
     {
-        CHECK(WaitForSingleObject(nextFrameEvent, 60) == WAIT_OBJECT_0);
-        NUI_SKELETON_FRAME frame;
+        CHECK(WaitForSingleObject(nextFrameEvent, 36) == WAIT_OBJECT_0);        NUI_SKELETON_FRAME frame;
         REQUIRE(SUCCEEDED(device->NuiSkeletonGetNextFrame(0, &frame)));
         CHECK(SUCCEEDED(device->NuiTransformSmooth(&frame, NULL)));
         int tracked_skeletons = 0;

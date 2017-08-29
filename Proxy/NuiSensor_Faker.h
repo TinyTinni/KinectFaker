@@ -5,6 +5,61 @@
 #include <KinectFileDef.pb.h>
 #include <comutil.h> // _bstr_t
 
+extern "C"
+{
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libswscale/swscale.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/imgutils.h>
+}
+
+class INuiFrameTexture_Faker: public INuiFrameTexture
+{
+
+private:
+    struct AVFrameDeleter
+    {
+        void operator()(AVFrame* f)
+        {
+            if (f) av_frame_free(&f);
+        }
+    };
+
+public:
+    using unique_avframe_ptr = std::unique_ptr<AVFrame, AVFrameDeleter>;
+
+    ULONG m_cRef;
+    AVFrame* m_frame;
+public:
+    void setNewFrame(AVFrame& n) { m_frame = &n; }
+    INuiFrameTexture_Faker(AVFrame& f);
+    ~INuiFrameTexture_Faker();
+
+    virtual int STDMETHODCALLTYPE BufferLen(void);
+
+    virtual int STDMETHODCALLTYPE Pitch(void);
+
+    virtual HRESULT STDMETHODCALLTYPE LockRect(
+        UINT Level,
+        /* [ref] */ NUI_LOCKED_RECT *pLockedRect,
+        /* [unique] */ RECT *pRect,
+        DWORD Flags);
+
+    virtual HRESULT STDMETHODCALLTYPE GetLevelDesc(
+        UINT Level,
+        NUI_SURFACE_DESC *pDesc);
+
+    virtual HRESULT STDMETHODCALLTYPE UnlockRect(
+        /* [in] */ UINT Level);
+
+    virtual ULONG STDMETHODCALLTYPE Release();
+    virtual ULONG STDMETHODCALLTYPE AddRef();
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID&, void**);
+
+};
+
+
 class INuiSensor_Faker : public INuiSensor
 {
 public:
@@ -16,21 +71,61 @@ public:
     };
 private:
 
+    struct Video
+    {
+    public:
+        using unique_avframe_ptr = INuiFrameTexture_Faker::unique_avframe_ptr;
+        AVFormatContext* formatCtx = nullptr;
+        AVStream* stream = nullptr;
+        int streamIdx = -1;
+        AVCodec* codec = nullptr;
+        AVCodecContext* codecCtx = nullptr;
+        SwsContext* swsCtx = nullptr;
+        AVPacket pkg;
+
+        AVFrame* videoFrame = nullptr; // non transformed frame from the video
+        AVFrame* currentFrame = nullptr; // transformed frame to NUI formatA
+
+        static const auto nui_pix_fmt = AV_PIX_FMT_RGB32;
+        static const int nui_width = 640;
+        static const int nui_height = 480;
+
+        Video(const char* filename);
+        ~Video();
+
+        // returns the next frame. This frame is just borrowed and will be invalid on the next "nextFrame" call of destroying
+        // the Video instance
+        // returns nullptr, if eof was reached
+        AVFrame* nextFrame();
+        void restart();
+
+
+    };
+
     // COM data
-    ULONG m_cRef;
+    ULONG m_cRef = 1;
     const _bstr_t m_connectionId;
     const int m_connectionIndex;
-    DWORD m_initFlags;
+    DWORD m_initFlags = -1;
 
     // skeleton data
     kif::Scene m_scene;
-    int m_currentFrameIdx;
+    int m_currentFrameIdx = 0;
 
+    // image stream data
+    std::unique_ptr<Video> m_videoStream = nullptr;
+    std::unique_ptr<INuiFrameTexture_Faker> m_imageCached = nullptr;
 
-    HANDLE m_nextFrameTimer;
+    // timers
+    HANDLE m_nextSkeletonFrameTimer = NULL;
+    HANDLE m_nextImageFrameTimer = NULL;
     // event handles
-    HANDLE m_nextSkeletonEvent;
+    HANDLE m_nextSkeletonEvent = NULL;
+    HANDLE m_nextImageEvent = NULL;
+
     const StreamInfos m_streamPaths;
+
+
 public:
 
     ~INuiSensor_Faker();

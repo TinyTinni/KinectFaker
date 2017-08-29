@@ -90,6 +90,8 @@ if (NOT OUTCOME_INCLUDE_DIR)
 endif()
 
 
+find_package(FFMPEG REQUIRED COMPONENTS SWSCALE AVUTIL AVFORMAT AVCODEC)
+
 ###############################################################
 
 target_include_directories(Kinect10  
@@ -99,6 +101,7 @@ PRIVATE
     ${JSON_INCLUDE_DIR}
     ${SPDLOG_INCLUDE_DIR}
     ${OUTCOME_INCLUDE_DIR}
+    ${FFMPEG_INCLUDE_DIR}
     )
 set(OUTCOME "")
 if (OUTCOME_UTILITY)
@@ -110,6 +113,7 @@ PUBLIC
     protobuf_def   
     debug comsuppwd.lib optimized comsuppw.lib #comsupport for _bstr_t
     ${OUTCOME}
+    ${FFMPEG_LIBRARIES}
     )
     
 target_compile_definitions(Kinect10
