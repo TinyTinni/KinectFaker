@@ -16,6 +16,8 @@ Recompiling or relinking of the Kinect application is not needed.
 
 _WIP: GUI is WIP. Currently, it can record and play skeleton animations._
 
+See [ffmpeg branch](https://github.com/TinyTinni/KinectFaker/tree/ffmpeg) for a version for faked color stream.
+
 ## Requirements
 For the Proxy:
 - Headers from the [Kinect SDK v1.8](https://www.microsoft.com/en-us/download/details.aspx?id=40278) 
