@@ -3,7 +3,9 @@
 #include <fstream>
 #include <utility>
 #include <new>
+#include <exception>
 
+#include <spdlog.h>
 #include <KinectFileDef.pb.h>
 
 VOID CALLBACK FrameCb(
@@ -64,9 +66,6 @@ INuiSensor_Faker::INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int inde
 
 HRESULT INuiSensor_Faker::NuiInitialize(DWORD dwFlags)
 {
-    if (!(dwFlags & NUI_INITIALIZE_FLAG_USES_SKELETON))
-        return E_INVALIDARG;
-
     HRESULT hr = S_OK;
     m_initFlags = 0;
     try {
@@ -75,16 +74,22 @@ HRESULT INuiSensor_Faker::NuiInitialize(DWORD dwFlags)
             std::ifstream scene_file(m_streamPaths.skeletonFilePath, std::ios::binary);
             if (scene_file.is_open())
                 if (!m_scene.ParseFromIstream(&scene_file))
-                    hr |= E_NUI_HARDWARE_FEATURE_UNAVAILABLE;
+                    hr |= E_NUI_FEATURE_NOT_INITIALIZED;
                 else
                     m_initFlags |= NUI_INITIALIZE_FLAG_USES_SKELETON;
         }
 
         if (dwFlags & NUI_INITIALIZE_FLAG_USES_COLOR)
         {
-            //todo: check if file exists
-            m_videoStream = std::make_unique<Video>(m_streamPaths.colorFilePath.c_str());
-            m_imageCached = std::make_unique<INuiFrameTexture_Faker>(*(m_videoStream->currentFrame));
+            try 
+            {
+                m_videoStream = std::make_unique<Video>(m_streamPaths.colorFilePath.c_str());
+                m_imageCached = std::make_unique<INuiFrameTexture_Faker>(*(m_videoStream->currentFrame));
+            }
+            catch (std::runtime_error&)
+            {
+                hr |= E_NUI_FEATURE_NOT_INITIALIZED;
+            }
             m_initFlags |= NUI_INITIALIZE_FLAG_USES_COLOR;
         }
     }
@@ -359,39 +364,52 @@ INuiSensor_Faker::Video::Video(const char * filename)
 #ifdef _DEBUG
     av_log_set_level(AV_LOG_DEBUG);
 #endif
-    avformat_open_input(&formatCtx, filename, nullptr, nullptr);
-    // if <0 -> failure
+    int averror;
+
+    averror = avformat_open_input(&formatCtx, filename, nullptr, nullptr);
+    if (averror < 0)
+        throw std::runtime_error(fmt::format("Cannot Open Video Stream: {}", filename));
 
     avformat_find_stream_info(formatCtx, nullptr);
-    // if < 0 -> failure
+    if (averror < 0)
+        throw std::runtime_error(fmt::format("Provided file \"{}\" is not a Video", filename));
 
     streamIdx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-    //if videoStreamId < 0 -> failure
+    if (averror < 0)
+        throw std::runtime_error(fmt::format("Provided file \"{}\" is not a Video", filename));
 
     stream = formatCtx->streams[streamIdx];
    
     codec = avcodec_find_decoder(stream->codecpar->codec_id);
-    // if codec == nullptr -> failed
+    if (!codec)
+        throw std::bad_alloc();
+
     codecCtx = avcodec_alloc_context3(codec);
+    if (!codecCtx)
+        throw std::bad_alloc(); //todo: better error handling, not all errors are bad_allocs
+
     codecCtx->refcounted_frames = 0;
-    // if codecCtx == nullptr -> failed
     avcodec_parameters_to_context(codecCtx, stream->codecpar);
     avcodec_open2(codecCtx, codec, NULL);
 
     av_init_packet(&pkg);
 
     videoFrame = av_frame_alloc();
+    if (!videoFrame)
+        throw std::bad_alloc();
     videoFrame->width = codecCtx->width;
     videoFrame->height = codecCtx->height;
     videoFrame->format = codecCtx->pix_fmt;
     av_image_alloc(videoFrame->data, videoFrame->linesize, codecCtx->width, codecCtx->height, codecCtx->pix_fmt, 0);
-    //failed --->
+    
     currentFrame = av_frame_alloc();
+    if (!currentFrame)
+        throw std::bad_alloc();
     currentFrame->width = nui_width;
     currentFrame->height = nui_height;
     currentFrame->format = nui_pix_fmt;
-    av_image_alloc(currentFrame->data, currentFrame->linesize, nui_width, nui_height, nui_pix_fmt, 0);
-    //<--- until failed
+    if (0 > av_image_alloc(currentFrame->data, currentFrame->linesize, nui_width, nui_height, nui_pix_fmt, 0))
+        throw std::bad_alloc();
 
     swsCtx = sws_getContext(
         //src
@@ -405,7 +423,8 @@ INuiSensor_Faker::Video::Video(const char * filename)
         SWS_BICUBIC,
         nullptr, nullptr, nullptr
     );
-    // if swsCtx == nullptr -> failed
+    if (!swsCtx)
+        throw std::bad_alloc();
 }
 
 INuiSensor_Faker::Video::~Video()
