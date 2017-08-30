@@ -5,7 +5,7 @@
 
 TEST_CASE("init Devices", "[init]")
 {  
-    const DWORD init_flags = NUI_INITIALIZE_FLAG_USES_SKELETON | NUI_INITIALIZE_FLAG_USES_COLOR;
+    const DWORD init_flags = NUI_INITIALIZE_FLAG_USES_SKELETON;
 
     int n_devices;
     REQUIRE(SUCCEEDED(NuiGetSensorCount(&n_devices)));
