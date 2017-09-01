@@ -46,8 +46,6 @@ set (SOURCES
     "../Proxy/NuiSensor_Faker.cpp"
     "SkeletonViewer.h"
     "SkeletonViewer.cpp"
-    "VideoPlay.h"
-    "VideoPlay.cpp"
     )
 add_executable( GUI WIN32 ${SOURCES} ${UI_SOURCES})
 
