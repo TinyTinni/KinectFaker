@@ -71,6 +71,7 @@ macro(find_component _component _pkgconfig _library _header)
     HINTS
       ${PC_LIB${_component}_INCLUDEDIR}
       ${PC_LIB${_component}_INCLUDE_DIRS}
+      ${FFMPEG_DIR}/include/
     PATH_SUFFIXES
       ffmpeg
   )
@@ -79,6 +80,7 @@ macro(find_component _component _pkgconfig _library _header)
       HINTS
       ${PC_LIB${_component}_LIBDIR}
       ${PC_LIB${_component}_LIBRARY_DIRS}
+      ${FFMPEG_DIR}/lib
   )
 
   set(${_component}_DEFINITIONS  ${PC_${_component}_CFLAGS_OTHER} CACHE STRING "The ${_component} CFLAGS.")
@@ -94,7 +96,7 @@ macro(find_component _component _pkgconfig _library _header)
 
 endmacro()
 
-
+message(STATUS "searching ffmpeg with given dir: ${FFMPEG_DIR}")
 # Check for cached results. If there are skip the costly part.
 if (NOT FFMPEG_LIBRARIES)
 
