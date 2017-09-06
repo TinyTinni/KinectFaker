@@ -48,7 +48,7 @@ INuiSensor_Faker* g_singleDevice = NULL; // device which is used in single devic
 
 // loggers
 std::shared_ptr<spdlog::logger> g_log = nullptr;
-std::shared_ptr<spdlog::logger> g_callLog = nullptr;
+std::shared_ptr<spdlog::logger> g_logTrace = nullptr;
 
 bool file_exists(const _bstr_t name) noexcept
 {
@@ -79,7 +79,38 @@ std::error_code create_devices() noexcept
         {
             const auto end = config_it->end();
 
-            auto it = config_it->find("level");
+            // redirect loggers, if requested
+            auto it = config_it->find("log_file");
+            if (it != end)
+            {
+                const auto filename = it->get<std::string>();
+                if (filename.empty())
+                    g_log->warn("\"log_file\" is empty. logging to console.");
+                else
+                {
+                    const std::string name = g_log->name();
+                    spdlog::drop(name);
+                    g_log.reset();
+                    g_log = spdlog::basic_logger_mt(name, filename);
+                }
+            }
+            it = config_it->find("trace_file");
+            if (it != end)
+            {
+                const auto filename = it->get<std::string>();
+                if (filename.empty())
+                    g_log->warn("\"trace_file\" is empty. trace-logging to console.");
+                else
+                {
+                    const std::string name = g_logTrace->name();
+                    spdlog::drop(name);
+                    g_logTrace.reset();
+                    g_logTrace = spdlog::basic_logger_mt(name, filename);
+                }
+            }
+
+            // configure loggers
+            it = config_it->find("level");
             if (it != end)
                 g_log->set_level(static_cast<spdlog::level::level_enum>(it->get<unsigned>()));
             else
@@ -87,13 +118,15 @@ std::error_code create_devices() noexcept
 
             it = config_it->find("trace_calls");
             if (it != end)
-                g_callLog->set_level((it->get<bool>()) ? spdlog::level::trace : spdlog::level::off);
+                g_logTrace->set_level((it->get<bool>()) ? spdlog::level::trace : spdlog::level::off);
+
+        
 
         }
         else
             g_log->warn("Loggers are not configured. Using Defaults.");
 
-        g_log->trace("Call Log level: {} ({})", g_callLog->level(), spdlog::level::to_str(g_callLog->level()));
+        g_log->trace("Call Log level: {} ({})", g_logTrace->level(), spdlog::level::to_str(g_logTrace->level()));
         g_log->trace("Log level: {} ({})", g_log->level(), spdlog::level::to_str(g_log->level()));
 
 
@@ -173,8 +206,8 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
         g_log = spdlog::stdout_color_mt("fk_proxy");
         g_log->set_level(spdlog::level::trace);
         
-        g_callLog = spdlog::stdout_logger_mt("call");
-        g_callLog->set_level(spdlog::level::off);
+        g_logTrace = spdlog::stdout_logger_mt("call");
+        g_logTrace->set_level(spdlog::level::off);
         
         g_log->trace("Init Kinect Proxy.");
 
@@ -207,8 +240,7 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
         is_proxy_init = false;
         g_devices.clear();
         if (g_singleDevice) { g_singleDevice->Release(); g_singleDevice = nullptr; }
-        g_callLog.reset();
-        g_log.reset();
+        spdlog::drop_all();
 
         break;
     }
@@ -224,7 +256,7 @@ outcome::result<R> call_nui(const char* name, Args&&... a)
 
     static std::unordered_map<const char*, FARPROC> cached_procs;
 
-    g_callLog->trace("original: {} ()", name);
+    g_logTrace->trace("original: {} ()", name);
     typedef R(*funcT)(std::remove_reference_t<Args>...);
     auto it = cached_procs.find(name);
     if (it == cached_procs.end())
@@ -388,7 +420,7 @@ HRESULT NUIAPI NuiInitialize(
     DWORD dwFlags
 )
 {
-    g_callLog->trace("{} (dwFlags={})", "NuiInitialize", dwFlags);
+    g_logTrace->trace("{} (dwFlags={})", "NuiInitialize", dwFlags);
     if (g_singleDevice != nullptr)
     {
         g_log->warn("Single Fake Kinect already initialized.");
@@ -409,7 +441,7 @@ HRESULT NUIAPI NuiSetFrameEndEvent(
 
 void NUIAPI NuiShutdown()
 {
-    g_callLog->trace("{} called", "NuiShutdown");
+    g_logTrace->trace("{} called", "NuiShutdown");
     if (g_singleDevice)
     {
         g_singleDevice->Release();
@@ -455,7 +487,7 @@ HRESULT NUIAPI NuiCreateSensorById(
     {
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
         std::string instId = conv1.to_bytes(strInstanceId);
-        g_callLog->trace("{} (strInstanceId={})", "NuiCreateSensorById", instId);
+        g_logTrace->trace("{} (strInstanceId={})", "NuiCreateSensorById", instId);
         // search for sensor with the given id
         _bstr_t instance_id = strInstanceId;
         for (size_t i = 0; i < g_devices.size(); ++i)
