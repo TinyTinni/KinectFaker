@@ -74,6 +74,9 @@ Not implemented functions will return `E_NOIMPL`.
 |                       |NuiStatus 
 |                       |NuiInstanceIndex
 |                       |NuiInitializationFlags
+|                       |NuiImageStreamOpen
+|                       |NuiImageStreamGetNextFrame
+|                       |NuiImageStreamReleaseFrame
 
 *)_NuiTransformSmooth_ Skeleton positions are saved after smoothing, therefore this function does nothing and has to be set in the animation file. 
 
