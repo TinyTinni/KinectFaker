@@ -3,7 +3,8 @@
 #include <fstream>
 #include <utility>
 #include <new>
-#include <exception>
+#include <system_error>
+
 
 #include <spdlog/spdlog.h>
 #include <KinectFileDef.pb.h>
@@ -16,6 +17,12 @@ VOID CALLBACK FrameCb(
     UNREFERENCED_PARAMETER(TimerOrWaitFired);
     HANDLE* pEvent = reinterpret_cast<HANDLE*>(lpParameter);
     SetEvent(*pEvent);
+}
+
+const detail::av_error_category &av_error_category()
+{
+    static detail::av_error_category c;
+    return c;
 }
 
 ULONG INuiSensor_Faker::Release()
@@ -368,19 +375,19 @@ INuiSensor_Faker::Video::Video(const char * filename)
 #ifdef _DEBUG
     av_log_set_level(AV_LOG_DEBUG);
 #endif
-    int averror;
+    av_error_code averror;
 
     averror = avformat_open_input(&formatCtx, filename, nullptr, nullptr);
-    if (averror < 0)
-        throw std::runtime_error(fmt::format("Cannot Open Video Stream: {}", filename));
+    if (!averror)
+        throw av_error(averror, filename);
 
-    avformat_find_stream_info(formatCtx, nullptr);
-    if (averror < 0)
-        throw std::runtime_error(fmt::format("Provided file \"{}\" is not a Video", filename));
+    averror = avformat_find_stream_info(formatCtx, nullptr);
+    if (!averror)
+        throw av_error(averror, filename);
 
     streamIdx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-    if (averror < 0)
-        throw std::runtime_error(fmt::format("Provided file \"{}\" is not a Video", filename));
+    if (streamIdx < 0)
+        throw av_error(streamIdx, filename);
 
     stream = formatCtx->streams[streamIdx];
    
@@ -390,7 +397,7 @@ INuiSensor_Faker::Video::Video(const char * filename)
 
     codecCtx = avcodec_alloc_context3(codec);
     if (!codecCtx)
-        throw std::bad_alloc(); //todo: better error handling, not all errors are bad_allocs
+        throw std::bad_alloc(); 
 
     codecCtx->refcounted_frames = 0;
     avcodec_parameters_to_context(codecCtx, stream->codecpar);
@@ -475,8 +482,8 @@ INuiFrameTexture_Faker::~INuiFrameTexture_Faker()
 
 int INuiFrameTexture_Faker::BufferLen(void)
 {
-    return av_image_get_buffer_size( 
-        AVPixelFormat(AV_PIX_FMT_RGB24), 640, 480, m_frame->linesize[0]);
+    return av_image_get_buffer_size( AVPixelFormat(m_frame->format),
+        m_frame->height, m_frame->width, m_frame->linesize[0]);
 }
 
 int INuiFrameTexture_Faker::Pitch(void)
