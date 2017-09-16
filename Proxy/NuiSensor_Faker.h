@@ -14,6 +14,57 @@ extern "C"
 #include <libavutil/imgutils.h>
 }
 
+
+#include <exception>
+
+namespace detail
+{
+    class av_error_category : public std::error_category
+    {
+    public:
+        // Return a short descriptive name for the category
+        virtual const char *name() const noexcept override final { return "AVERROR"; }
+        virtual std::string message(int c) const override final
+        {
+            std::string r(AV_ERROR_MAX_STRING_SIZE, '\0');
+            av_make_error_string(&r[0], r.size(), c);
+            return r; //RVO
+        }
+    };
+}
+
+extern const detail::av_error_category &av_error_category();
+
+class av_error_code :public std::error_code
+{
+public:
+    av_error_code(int c)
+        : std::error_code(c, av_error_category()){}
+    av_error_code()
+        :std::error_code(0, av_error_category()){}
+    operator bool() {return std::error_code::value() >= 0; }
+
+    av_error_code& operator=(const av_error_code& c) = default;
+    ~av_error_code() = default;
+};
+
+class av_error : public std::system_error
+{
+public:
+    av_error(int ec, const std::string& what_arg)
+        :std::system_error(av_error_code(ec), what_arg) {}
+    av_error(int ec, const char* what_arg)
+        :std::system_error(av_error_code(ec), what_arg){}
+    av_error(int ec)
+        :std::system_error(av_error_code(ec)){}
+    av_error(av_error_code ec, const std::string& what_arg)
+        :std::system_error(ec, what_arg) {}
+    av_error(av_error_code ec, const char* what_arg)
+        :std::system_error(ec, what_arg) {}
+    av_error(av_error_code ec)
+        :std::system_error(ec) {}
+};
+
 class INuiFrameTexture_Faker: public INuiFrameTexture
 {
 
