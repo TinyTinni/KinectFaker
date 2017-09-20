@@ -8,7 +8,8 @@ INuiSensor_TracerAdaptor::~INuiSensor_TracerAdaptor()
 {
 }
 
-INuiSensor_TracerAdaptor::INuiSensor_TracerAdaptor(std::shared_ptr<spdlog::logger> logger, std::unique_ptr<INuiSensor> sensor)
+INuiSensor_TracerAdaptor::INuiSensor_TracerAdaptor(std::shared_ptr<spdlog::logger> logger, std::unique_ptr<INuiSensor> sensor):
+    m_log(logger), m_sensor(std::move(sensor))
 {
 }
 
