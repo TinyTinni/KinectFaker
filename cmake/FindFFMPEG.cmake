@@ -96,7 +96,6 @@ macro(find_component _component _pkgconfig _library _header)
 
 endmacro()
 
-message(STATUS "searching ffmpeg with given dir: ${FFMPEG_DIR}")
 # Check for cached results. If there are skip the costly part.
 if (NOT FFMPEG_LIBRARIES)
 
