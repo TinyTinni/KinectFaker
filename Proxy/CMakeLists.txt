@@ -8,6 +8,8 @@ set (SOURCES
     "av_error.cpp"
     "NuiSensor_Faker.h"
     "NuiSensor_Faker.cpp"
+    "NuiSensor_TracerAdaptor.h"
+    "NuiSensor_TracerAdaptor.cpp"
     "Proxy.cpp"
     
     "Kinect10.def"

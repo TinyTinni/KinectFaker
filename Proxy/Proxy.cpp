@@ -20,6 +20,7 @@
 #include <comutil.h> //convert from BSTR to _bstr_t
 
 #include "NuiSensor_Faker.h"
+#include "NuiSensor_TracerAdaptor.h"
 
 #include <json.hpp>
 
@@ -38,6 +39,7 @@ struct FakeDevice
     const std::string name;
     const std::string filename;
     const std::string imageFilename;
+    std::shared_ptr<spdlog::logger> tracer;
     _bstr_t connectionId;
 };
 
@@ -149,7 +151,26 @@ std::error_code create_devices() noexcept
                 else
                     connID = connID_it.value().get<std::string>().c_str();
 
-                // skeleton_file
+                // traceing
+                const auto trace_it = dev.find("trace");
+                std::shared_ptr<spdlog::logger> tracer = nullptr;
+                if (trace_it != dev.end())
+                if (trace_it.value().get<bool>())
+                {
+                    std::string trace_file = "";
+                    const auto trace_file_it = dev.find("trace_file");
+                    if (trace_file_it != dev.end())
+                        trace_file = trace_file_it.value().get<std::string>();
+
+                    if (trace_file.empty())
+                        tracer = g_logTrace;
+                    else
+                        tracer = spdlog::basic_logger_mt(dev_name, trace_file);
+                }
+
+                
+
+                // streaming files
                 const auto skeleton_file_it = dev.find("skeleton_file");
                 if (skeleton_file_it == dev.end())
                 {
@@ -177,6 +198,7 @@ std::error_code create_devices() noexcept
                     dev_name,
                     skeleton_file, //skeleton file
                     color_file,
+                    tracer, 
                     connID //connectionId
                 }
                 ));
@@ -353,7 +375,10 @@ HRESULT NUIAPI NuiCreateSensorByIndex(
     s.skeletonFilePath = g_devices[index]->filename;
     s.colorFilePath = g_devices[index]->imageFilename;
     *ppNuiSensor = new (std::nothrow) INuiSensor_Faker(std::move(s), g_devices[index]->connectionId, index + pCount);
-    return (ppNuiSensor) ? S_OK : E_OUTOFMEMORY;
+    if (*ppNuiSensor && g_devices[index]->tracer)
+        *ppNuiSensor = new (std::nothrow) INuiSensor_TracerAdaptor(g_devices[index]->tracer, std::unique_ptr<INuiSensor>(*ppNuiSensor));
+
+    return (*ppNuiSensor) ? S_OK : E_OUTOFMEMORY;
 }
 HRESULT NUIAPI NuiCameraElevationGetAngle(
     LONG *plAngleDegrees
@@ -513,7 +538,10 @@ HRESULT NUIAPI NuiCreateSensorById(
                 s.skeletonFilePath = d->filename;
                 s.colorFilePath = d->imageFilename;
                 *ppNuiSensor = new (std::nothrow) INuiSensor_Faker(std::move(s), d->connectionId, num_devices + static_cast<int>(i));
-                return (ppNuiSensor) ? S_OK: E_OUTOFMEMORY;
+                if (*ppNuiSensor && d->tracer)
+                    *ppNuiSensor = new (std::nothrow) INuiSensor_TracerAdaptor(d->tracer, std::unique_ptr<INuiSensor>(*ppNuiSensor));
+
+                return (*ppNuiSensor) ? S_OK: E_OUTOFMEMORY;
             }
         }
     }
