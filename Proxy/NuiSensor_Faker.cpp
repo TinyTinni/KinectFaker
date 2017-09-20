@@ -5,8 +5,6 @@
 #include <new>
 #include <system_error>
 
-
-#include <spdlog/spdlog.h>
 #include <KinectFileDef.pb.h>
 
 VOID CALLBACK FrameCb(
@@ -17,12 +15,6 @@ VOID CALLBACK FrameCb(
     UNREFERENCED_PARAMETER(TimerOrWaitFired);
     HANDLE* pEvent = reinterpret_cast<HANDLE*>(lpParameter);
     SetEvent(*pEvent);
-}
-
-const detail::av_error_category &av_error_category()
-{
-    static detail::av_error_category c;
-    return c;
 }
 
 ULONG INuiSensor_Faker::Release()

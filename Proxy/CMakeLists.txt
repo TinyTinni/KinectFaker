@@ -4,6 +4,8 @@ project( Kinect_Proxy )
 
 set (SOURCES
     "${CMAKE_SOURCE_DIR}/Readme.md"
+    "av_error.hpp"
+    "av_error.cpp"
     "NuiSensor_Faker.h"
     "NuiSensor_Faker.cpp"
     "Proxy.cpp"
