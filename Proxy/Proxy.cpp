@@ -292,7 +292,7 @@ outcome::result<R> call_nui(const char* name, Args&&... a)
 
     static std::unordered_map<const char*, FARPROC> cached_procs;
 
-    g_logTrace->trace("original: {} ()", name);
+    g_logTrace->trace(name);
     typedef R(*funcT)(std::remove_reference_t<Args>...);
     auto it = cached_procs.find(name);
     if (it == cached_procs.end())
