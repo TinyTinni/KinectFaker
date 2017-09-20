@@ -42,8 +42,6 @@ set (SOURCES
     "main.cpp"
     "main_window.h"
     "main_window.cpp"
-    "../Proxy/NuiSensor_Faker.h"
-    "../Proxy/NuiSensor_Faker.cpp"
     "SkeletonViewer.h"
     "SkeletonViewer.cpp"
     )
