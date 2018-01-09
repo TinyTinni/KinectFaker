@@ -327,6 +327,7 @@ R call_device(const char* name, memfuncT mem_f, Args&&... a)
     }
 }
 
+// calls given function with HRESULT as return type. For single device mode
 #define CALL_DEVICE_H(X, ...) call_device<HRESULT>(#X, &INuiSensor_Faker:: ## X, __VA_ARGS__)
 
 //---------------------------------------------------------------------
