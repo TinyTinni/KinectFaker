@@ -23,6 +23,13 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 
+if(POLICY CMP0071)
+    cmake_policy(GET CMP0071 _ALREDAY_SET)
+    if (NOT _ALREADY_SET)
+        cmake_policy(SET CMP0071 NEW)
+    endif()
+endif()
+
 # Find the QtWidgets library
 #myhunter_add_package(Qt5 COMPONENTS Widgets)
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
@@ -113,10 +120,6 @@ if(TARGET Qt5::windeployqt)
     set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
 
     include(InstallRequiredSystemLibraries)
-
-    install(
-        PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
-    )
     
     install(TARGETS GUI
         RUNTIME DESTINATION ./GUI
