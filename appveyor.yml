@@ -1,5 +1,6 @@
 version: 1.0.{build}
 image: Visual Studio 2017
+cache: c:\tools\vcpkg\installed\
 configuration:
     - Debug
     - Release
@@ -35,32 +36,12 @@ before_build:
         "v110" {"Visual Studio 11 2012"}
         "v100" {"Visual Studio 10 2010"}
     }
-    $conan_arch = "x86"
-    if ($env:PLATFORM -eq "x64")
-    {
-        $generator = "$generator Win64"
-        $conan_arch = "x86_64"
-    }
     cd $env:APPVEYOR_BUILD_FOLDER
-    conan user
-    conan --version
-    $conan_compiler_v = switch ($env:TOOLSET)
-    {
-        "v150" {"15"}
-        "v140" {"14"}
-        "v130" {"13"}
-    }
-    $conan_runtime = switch($env:CONFIGURATION)
-    {
-        "Release" {"MT"} #conan only provides static runtime linked protobuf for vs15
-        "Debug" {"MTd"}
-    }
-    $conan_build_type = $env:CONFIGURATION
-    conan install --build=missing -s build_type=$conan_build_type -s compiler.version=$conan_compiler_v -s arch=$conan_arch -s compiler.runtime=$conan_runtime
+    vcpkg install "protobuf:$env:PLATFORM"+"-windows"
     cmake --version
     md build -Force | Out-Null
     cd build 
-    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="Debug;Release" -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DUSE_CONAN=ON -DBUILD_TESTS=ON -DCMAKE_CXX_FLAGS_DEBUG="/MTd" -DCMAKE_CXX_FLAGS_RELEASE="/MT" ..
+    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="$env:CONFIGURATION" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DBUILD_TESTS=ON -DCMAKE_CXX_FLAGS_DEBUG="/MTd" -DCMAKE_CXX_FLAGS_RELEASE="/MT" ..
 build_script:
     - ps: cmake --build . --config $env:CONFIGURATION
     
