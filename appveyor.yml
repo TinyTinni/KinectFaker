@@ -23,8 +23,6 @@ install:
     - mkdir Headers
     - ps: appveyor DownloadFile 'https://gist.github.com/TinyTinni/2209b0baaec9ef1d61e729b757f9210f/archive/bee0361721a66856542274f59ad3ed733b8a9c43.zip' -FileName Headers.zip
     - 7z.exe e Headers.zip -o*
-    # Protobuf using conan
-    - pip.exe install conan
     
 before_build:
 - ps: |
@@ -37,7 +35,8 @@ before_build:
         "v100" {"Visual Studio 10 2010"}
     }
     cd $env:APPVEYOR_BUILD_FOLDER
-    vcpkg install "protobuf:$env:PLATFORM"+"-windows"
+    $protobuf_install_name = "protobuf:$env:PLATFORM"+"-windows"
+    vcpkg install $protobuf_install_name
     cmake --version
     md build -Force | Out-Null
     cd build 
