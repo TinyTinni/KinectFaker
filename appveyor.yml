@@ -2,14 +2,14 @@ version: 1.0.{build}
 image: Visual Studio 2017
 cache: c:\tools\vcpkg\installed\
 configuration:
-    - Debug
+    #- Debug
     - Release
 platform:
     - x86
     - x64
 environment:
     matrix:
-    #    - Toolset: v140
+        - Toolset: v140
         - Toolset: v150
 install:
     - git submodule init
@@ -33,6 +33,10 @@ before_build:
         "v120" {"Visual Studio 12 2013"}
         "v110" {"Visual Studio 11 2012"}
         "v100" {"Visual Studio 10 2010"}
+    }
+    if ($env:PLATFORM -eq "x64")
+    {
+        $generator = "$generator Win64"
     }
     cd $env:APPVEYOR_BUILD_FOLDER
     $protobuf_install_name = "protobuf:$env:PLATFORM"+"-windows"
