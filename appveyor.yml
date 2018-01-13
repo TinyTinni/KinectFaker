@@ -9,7 +9,7 @@ platform:
     - x64
 environment:
     matrix:
-        - Toolset: v140
+        #- Toolset: v140 #not supported by outcome lib
         - Toolset: v150
 install:
     - git submodule init
