@@ -77,8 +77,6 @@ Not implemented functions will return `E_NOIMPL`.
 
 **) _NuiUniqueId_ [Recommended by MSDN: Don't use!](https://msdn.microsoft.com/en-us/library/hh973101.aspx)
 
-Not all members of a _NUI_SKELETON_FRAME_ instance are filled yet.
-
 Functions which will only be avaiable when a Kinect runtime is present:
 
 | Kinect Runtime Functions  |
@@ -88,7 +86,7 @@ Functions which will only be avaiable when a Kinect runtime is present:
 |NuiSkeletonCalculateBoneOrientations|
 |NuiSetDeviceStatusCallback|
 
-They are not changed in anyway and not guaranteed to work.
+The functions above are not changed in any way and not guaranteed to work.
 
 ## LICENSE
 [GPLv3](./License)© Matthias Möller. Made with ♥ in Germany.
