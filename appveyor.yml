@@ -44,7 +44,8 @@ before_build:
     cmake --version
     md build -Force | Out-Null
     cd build 
-build_script:    - ps: cmake --build . --config $env:CONFIGURATION
+build_script:    
+- ps: cmake --build . --config $env:CONFIGURATION
     
 test_script:
 - ps: |
