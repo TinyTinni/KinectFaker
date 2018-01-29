@@ -39,11 +39,12 @@ before_build:
         $generator = "$generator Win64"
     }
     cd $env:APPVEYOR_BUILD_FOLDER
-    $protobuf_install_name = "protobuf:$env:PLATFORM"+"-windows"
-    vcpkg install $protobuf_install_name
+    $triplet = "$env:PLATFORM"+"-windows"
+    vcpkg install --triplet "$triplet protobuf ffmpeg
     cmake --version
     md build -Force | Out-Null
     cd build 
+    cmake -G "$generator" -DCMAKE_CONFIGURATION_TYPES="$env:CONFIGURATION" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DKinectSDK_INCLUDE_DIRS="C:\projects\deps\Headers" -DBUILD_GUI=OFF -DBUILD_TESTS=ON ..
 build_script:    
 - ps: cmake --build . --config $env:CONFIGURATION
     
