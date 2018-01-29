@@ -129,9 +129,8 @@ private:
 
 public:
 
-    INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index);
-    ~INuiSensor_Faker();
-
+        INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index);
+        ~INuiSensor_Faker();
 
     // INuiSensor overloaded functions
     virtual ULONG STDMETHODCALLTYPE Release();

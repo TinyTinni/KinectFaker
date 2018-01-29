@@ -106,9 +106,7 @@ void INuiSensor_Faker::NuiShutdown(void)
     CloseHandle(m_nextSkeletonEvent);
     if (m_nextSkeletonFrameTimer != NULL) DeleteTimerQueueTimer(0, m_nextSkeletonFrameTimer, 0);
     m_nextSkeletonFrameTimer = NULL;
-    m_scene.Clear();
-    m_videoStream.reset();
-    m_imageCached.reset();
+    m_initFlags = 0;
 
     m_scene.Clear();
     m_videoStream.reset();

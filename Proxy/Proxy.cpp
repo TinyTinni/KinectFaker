@@ -53,8 +53,6 @@ INuiSensor_Faker* g_singleDevice = NULL; // device which is used in single devic
 std::shared_ptr<spdlog::logger> g_log = nullptr;
 std::shared_ptr<spdlog::logger> g_logTrace = nullptr;
 
-
-
 bool file_exists(const _bstr_t name) noexcept
 {
     const auto fileAttrib = GetFileAttributes(name);
