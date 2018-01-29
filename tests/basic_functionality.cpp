@@ -64,6 +64,7 @@ TEST_CASE("get skeleton frame", "[skeleton]")
     HANDLE nextFrameEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     REQUIRE(SUCCEEDED(device->NuiSkeletonTrackingEnable(nextFrameEvent, 0)));
 
+    NUI_SKELETON_FRAME frame = {};
     //check if the next 10 frames has a tracked skeleton
     for (size_t i = 0; i < 10; ++i)
     {

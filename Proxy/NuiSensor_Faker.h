@@ -129,16 +129,8 @@ private:
 
 public:
 
-    const StreamInfos m_streamPaths;
-
-    //INuiSensor_Faker(kif::Scene s, _bstr_t connectionId, int index);
     INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index);
-
-
-
-
-    //INuiSensor_Faker(kif::Scene s, _bstr_t connectionId, int index);
-    INuiSensor_Faker(StreamInfos s, _bstr_t connectionId, int index);
+    ~INuiSensor_Faker();
 
 
     // INuiSensor overloaded functions
