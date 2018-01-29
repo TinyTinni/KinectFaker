@@ -40,7 +40,7 @@ before_build:
     }
     cd $env:APPVEYOR_BUILD_FOLDER
     $triplet = "$env:PLATFORM"+"-windows"
-    vcpkg install --triplet "$triplet protobuf ffmpeg
+    vcpkg install --triplet "$triplet" protobuf ffmpeg
     cmake --version
     md build -Force | Out-Null
     cd build 
