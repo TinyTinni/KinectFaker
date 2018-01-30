@@ -7,6 +7,8 @@
 
 #include <KinectFileDef.pb.h>
 
+#include "ScopeGuard.hpp"
+
 VOID CALLBACK FrameCb(
     _In_ PVOID   lpParameter,
     _In_ BOOLEAN TimerOrWaitFired
@@ -361,6 +363,8 @@ HRESULT INuiSensor_Faker::NuiGetDepthFilterForTimeStamp(LARGE_INTEGER liTimeStam
 
 INuiSensor_Faker::Video::Video(const char * filename)
 {
+    CAN_FAIL;
+
     av_register_all();
 #ifdef _DEBUG
     av_log_set_level(AV_LOG_DEBUG);
@@ -370,6 +374,7 @@ INuiSensor_Faker::Video::Video(const char * filename)
     averror = avformat_open_input(&formatCtx, filename, nullptr, nullptr);
     if (!averror)
         throw av_error(averror, filename);
+    FAIL_EXIT{ avformat_close_input(&formatCtx); };
 
     averror = avformat_find_stream_info(formatCtx, nullptr);
     if (!averror)
@@ -388,6 +393,7 @@ INuiSensor_Faker::Video::Video(const char * filename)
     codecCtx = avcodec_alloc_context3(codec);
     if (!codecCtx)
         throw std::bad_alloc(); 
+    FAIL_EXIT{ avcodec_free_context(&codecCtx); };
 
     codecCtx->refcounted_frames = 0;
     avcodec_parameters_to_context(codecCtx, stream->codecpar);
@@ -398,6 +404,8 @@ INuiSensor_Faker::Video::Video(const char * filename)
     videoFrame = av_frame_alloc();
     if (!videoFrame)
         throw std::bad_alloc();
+    FAIL_EXIT{ av_frame_free(&videoFrame); };
+
     videoFrame->width = codecCtx->width;
     videoFrame->height = codecCtx->height;
     videoFrame->format = codecCtx->pix_fmt;
@@ -406,6 +414,8 @@ INuiSensor_Faker::Video::Video(const char * filename)
     currentFrame = av_frame_alloc();
     if (!currentFrame)
         throw std::bad_alloc();
+    FAIL_EXIT{ av_frame_free(&currentFrame); };
+
     currentFrame->width = nui_width;
     currentFrame->height = nui_height;
     currentFrame->format = nui_pix_fmt;
@@ -426,15 +436,18 @@ INuiSensor_Faker::Video::Video(const char * filename)
     );
     if (!swsCtx)
         throw std::bad_alloc();
+    FAIL_EXIT{ sws_freeContext(swsCtx); };
+
+    SUCCESS;
 }
 
 INuiSensor_Faker::Video::~Video()
 {
-    if (formatCtx) avformat_close_input(&formatCtx);
-    if (codecCtx) avcodec_free_context(&codecCtx);
-    if (swsCtx) sws_freeContext(swsCtx);
-    if (videoFrame) av_frame_free(&videoFrame);
-    if (currentFrame) av_frame_free(&currentFrame);
+    avformat_close_input(&formatCtx);
+    avcodec_free_context(&codecCtx);
+    sws_freeContext(swsCtx);
+    av_frame_free(&videoFrame);
+    av_frame_free(&currentFrame);
 }
 
 AVFrame* INuiSensor_Faker::Video::nextFrame()

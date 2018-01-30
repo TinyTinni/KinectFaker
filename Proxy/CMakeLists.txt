@@ -11,6 +11,7 @@ set (SOURCES
     "NuiSensor_TracerAdaptor.h"
     "NuiSensor_TracerAdaptor.cpp"
     "Proxy.cpp"
+    "ScopeGuard.hpp"
     
     "Kinect10.def"
     )
