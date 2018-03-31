@@ -485,7 +485,7 @@ HRESULT NUIAPI NuiCreateSensorById(
 {
     if (is_proxy_init)
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv1;
         std::string instId = conv1.to_bytes(strInstanceId);
         g_logTrace->trace("{} (strInstanceId={})", "NuiCreateSensorById", instId);
         // search for sensor with the given id
