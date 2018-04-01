@@ -43,7 +43,7 @@ find_path(
 
 if (NOT JSON_INCLUDE_DIR)
     message(STATUS "Could not find nlohmann-json. Create Download target.")
-    file(DOWNLOAD "https://raw.githubusercontent.com/nlohmann/json/develop/src/json.hpp" "${CMAKE_CURRENT_BINARY_DIR}/nlohmann/json.hpp")
+    file(DOWNLOAD "https://raw.githubusercontent.com/nlohmann/json/develop/single_include/nlohmann/json.hpp" "${CMAKE_CURRENT_BINARY_DIR}/nlohmann/json.hpp")
     set(JSON_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/nlohmann")
 endif()
 
