@@ -26,8 +26,8 @@
 #define SPDLOG_NO_DATETIME
 #include <spdlog/spdlog.h>
 #include <spdlog/logger.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/simple_file_sink.h>
+#include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/sinks/file_sinks.h>
 
 #include <system_error>
 #include <outcome.hpp>

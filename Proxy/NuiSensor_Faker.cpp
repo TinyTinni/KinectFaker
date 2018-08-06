@@ -4,9 +4,8 @@
 #include <utility>
 #include <new>
 #include <exception>
+#include <spdlog/fmt/fmt.h>
 
-#include <spdlog/spdlog.h>
-#include <spdlog/logger.h>
 #include <KinectFileDef.pb.h>
 
 VOID CALLBACK FrameCb(
