@@ -25,6 +25,9 @@
 
 #define SPDLOG_NO_DATETIME
 #include <spdlog/spdlog.h>
+#include <spdlog/logger.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/simple_file_sink.h>
 
 #include <system_error>
 #include <outcome.hpp>
@@ -128,8 +131,8 @@ std::error_code create_devices() noexcept
         else
             g_log->warn("Loggers are not configured. Using Defaults.");
 
-        g_log->trace("Call Log level: {} ({})", g_logTrace->level(), spdlog::level::to_str(g_logTrace->level()));
-        g_log->trace("Log level: {} ({})", g_log->level(), spdlog::level::to_str(g_log->level()));
+        g_log->trace("Call Log level: {} ({})", g_logTrace->level(), g_logTrace->level());
+        g_log->trace("Log level: {} ({})", g_log->level(), g_log->level());
 
 
         //-------- Load Devices -------------
@@ -219,7 +222,7 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
         g_log = spdlog::stdout_color_mt("fk_proxy");
         g_log->set_level(spdlog::level::trace);
         
-        g_logTrace = spdlog::stdout_logger_mt("call");
+        g_logTrace = spdlog::stdout_color_mt("call");
         g_logTrace->set_level(spdlog::level::off);
         
         g_log->trace("Init Kinect Proxy.");

@@ -6,6 +6,7 @@
 #include <exception>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/logger.h>
 #include <KinectFileDef.pb.h>
 
 VOID CALLBACK FrameCb(
